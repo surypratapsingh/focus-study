@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Study OS v1.0.0 — The Intelligent Offline Exam Preparation System</title>
+    <meta name="description" content="Focus Study is a 100% offline-first, zero-cost Android study companion. Adaptive Pomodoro, 6-phase strategic revision planner, natural language voice coach, and zero cloud subscriptions.">
+    <meta name="theme-color" content="#0b0f19">
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Focus Study OS — Master Any Exam Without The Burnout">
+    <meta property="og:description" content="100% Offline-First. 0 Cloud Bills. Adaptive Pomodoro + 6-Phase Strategic Exam Planner + Voice AI Coach. Download APK v1.0.0 now!">
+    <meta property="og:image" content="https://raw.githubusercontent.com/surypratapsingh/focus-study/main/web/preview.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        obsidian: '#0b0f19',
+                        slateCard: '#131b2e',
+                        electricBlue: '#38bdf8',
+                        vibrantIndigo: '#6366f1',
+                        neonEmerald: '#10b981',
+                        amberAlert: '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+        .glow-blue {
+            box-shadow: 0 0 50px -10px rgba(56, 189, 248, 0.3);
+        }
+        .glow-indigo {
+            box-shadow: 0 0 60px -15px rgba(99, 102, 241, 0.35);
+        }
+        .glow-card:hover {
+            box-shadow: 0 10px 30px -5px rgba(56, 189, 248, 0.2);
+            border-color: rgba(56, 189, 248, 0.5);
+            transform: translateY(-4px);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-border {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.4), rgba(99, 102, 241, 0.2), rgba(16, 185, 129, 0.3));
+        }
+        .phone-mockup {
+            border: 10px solid #1e293b;
+            border-radius: 42px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.2);
+        }
+    </style>
+</head>
+<body class="selection:bg-electricBlue selection:text-obsidian">
+
+    <!-- Ambient Background Lighting -->
+    <div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-electricBlue/15 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/3 -right-40 w-[500px] h-[500px] bg-vibrantIndigo/15 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-40 left-1/3 w-[600px] h-[600px] bg-neonEmerald/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- Navigation Header -->
+    <nav class="sticky top-0 z-50 backdrop-blur-xl bg-obsidian/80 border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-electricBlue to-vibrantIndigo p-0.5 shadow-lg shadow-electricBlue/20 flex items-center justify-center">
+                    <div class="w-full h-full bg-obsidian rounded-[14px] flex items-center justify-center">
+                        <span class="text-2xl">🎯</span>
+                    </div>
+                </div>
+                <div>
+                    <span class="font-extrabold text-xl tracking-tight text-white flex items-center gap-2">
+                        Focus Study <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-electricBlue/10 text-electricBlue border border-electricBlue/30">v1.0.0</span>
+                    </span>
+                    <span class="text-xs text-slate-400 block -mt-0.5">Offline-First Exam OS</span>
+                </div>
+            </div>
+
+            <!-- Desktop Links -->
+            <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
+                <a href="#features" class="hover:text-electricBlue transition">Features</a>
+                <a href="#anti-bill" class="hover:text-neonEmerald transition">Anti-Bill Guarantee</a>
+                <a href="#install" class="hover:text-electricBlue transition">How to Install</a>
+                <a href="#feedback" class="hover:text-electricBlue transition">Feedback</a>
+                <a href="#faq" class="hover:text-electricBlue transition">FAQ</a>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="shareWebsite()" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700/60 transition">
+                    <svg class="w-4 h-4 text-electricBlue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                    Share
+                </button>
+                <a href="#download" class="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-electricBlue to-vibrantIndigo hover:opacity-90 text-obsidian font-bold text-xs sm:text-sm shadow-lg shadow-electricBlue/25 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Download APK
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+                
+                <!-- Hero Left Copy -->
+                <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/80 text-xs font-semibold text-slate-300 shadow-inner">
+                        <span class="w-2 h-2 rounded-full bg-neonEmerald animate-pulse"></span>
+                        <span>Version 1.0.0 Beta is Live</span>
+                        <span class="text-slate-500">•</span>
+                        <span class="text-electricBlue font-mono">100% Free & Offline</span>
+                    </div>
+
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12]">
+                        Master Any Exam. <br>
+                        <span class="gradient-text">Without The Burnout.</span>
+                    </h1>
+
+                    <p class="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
+                        The ultimate local-first study companion designed for engineering, medical, and competitive students. Features an <strong>Adaptive Pomodoro Timer</strong>, a <strong>6-Phase Strategic Revision Planner</strong>, and a <strong>Natural-Language Voice Coach</strong> that never sends data to a cloud.
+                    </p>
+
+                    <!-- Trust Metrics Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 max-w-xl mx-auto lg:mx-0 text-left">
+                        <div class="p-3 rounded-xl bg-slateCard/60 border border-slate-800/80">
+                            <div class="text-lg font-bold text-white">0₹ / $0</div>
+                            <div class="text-[11px] text-slate-400">Forever Zero Cost</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slateCard/60 border border-slate-800/80">
+                            <div class="text-lg font-bold text-neonEmerald">100%</div>
+                            <div class="text-[11px] text-slate-400">Offline SQLite</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slateCard/60 border border-slate-800/80">
+                            <div class="text-lg font-bold text-electricBlue">12.3 MB</div>
+                            <div class="text-[11px] text-slate-400">Compact APK</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slateCard/60 border border-slate-800/80">
+                            <div class="text-lg font-bold text-vibrantIndigo">Android 8+</div>
+                            <div class="text-[11px] text-slate-400">Samsung, Pixel, etc.</div>
+                        </div>
+                    </div>
+
+                    <!-- Direct Download Action Bar -->
+                    <div id="download" class="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-4">
+                        <a href="downloads/FocusStudy-v1.0.0-release.apk" download="FocusStudy-v1.0.0-release.apk" class="group relative px-6 py-4 rounded-2xl bg-gradient-to-r from-electricBlue via-sky-400 to-vibrantIndigo text-obsidian font-extrabold text-base flex items-center justify-center gap-3 shadow-xl shadow-electricBlue/20 hover:scale-[1.02] active:scale-[0.98] transition">
+                            <svg class="w-6 h-6 transition-transform group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>Download Release APK <span class="text-xs font-mono opacity-80">(12.3 MB)</span></span>
+                        </a>
+
+                        <a href="#install" class="px-5 py-4 rounded-2xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-semibold text-sm flex items-center justify-center gap-2 border border-slate-700/80 transition">
+                            <span>How to Install</span>
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- Secondary download link for debug build -->
+                    <div class="text-xs text-slate-500 flex items-center justify-center lg:justify-start gap-3 pt-1">
+                        <span>Alternate:</span>
+                        <a href="downloads/FocusStudy-v1.0.0-debug.apk" download="FocusStudy-v1.0.0-debug.apk" class="text-slate-400 hover:text-electricBlue underline font-mono">
+                            Download Debug APK (18.9 MB)
+                        </a>
+                        <span>•</span>
+                        <span>Signed with Android Cert</span>
+                    </div>
+                </div>
+
+                <!-- Hero Right: Interactive Phone Preview -->
+                <div class="lg:col-span-5 flex justify-center">
+                    <div class="relative w-[310px] sm:w-[340px] phone-mockup bg-slate-950 p-4 select-none">
+                        <!-- Phone Notch / Camera -->
+                        <div class="w-24 h-4 bg-slate-900 rounded-full mx-auto mb-4"></div>
+
+                        <!-- Mockup Screen Content -->
+                        <div class="space-y-4">
+                            <!-- Top Bar -->
+                            <div class="flex items-center justify-between text-xs text-slate-400">
+                                <span class="font-bold text-white text-sm">Focus Study</span>
+                                <span class="px-2 py-0.5 rounded-full bg-neonEmerald/15 text-neonEmerald font-mono text-[10px] font-bold">● 71d to Exam</span>
+                            </div>
+
+                            <!-- Circular Timer Widget -->
+                            <div class="relative w-48 h-48 mx-auto rounded-full border-4 border-slate-800 flex flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-950 shadow-inner">
+                                <div class="absolute inset-2 rounded-full border-2 border-dashed border-electricBlue/40 animate-spin" style="animation-duration: 40s;"></div>
+                                <span class="text-[10px] font-mono text-electricBlue tracking-wider uppercase font-semibold">POMODORO FOCUS</span>
+                                <span class="text-4xl font-extrabold text-white font-mono tracking-tight my-1">24:45</span>
+                                <span class="text-[11px] text-slate-400 font-medium">Coding & Algorithms</span>
+                                <div class="mt-2 flex gap-1">
+                                    <span class="w-2 h-2 rounded-full bg-electricBlue"></span>
+                                    <span class="w-2 h-2 rounded-full bg-slate-700"></span>
+                                    <span class="w-2 h-2 rounded-full bg-slate-700"></span>
+                                    <span class="w-2 h-2 rounded-full bg-slate-700"></span>
+                                </div>
+                            </div>
+
+                            <!-- Scholar Tier Card -->
+                            <div class="p-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800/80 border border-slate-700/60 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-xl bg-vibrantIndigo/20 flex items-center justify-center text-sm">🧙‍♂️</div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white">Grandmaster Scholar</div>
+                                        <div class="text-[10px] text-slate-400">1,240 XP · 7-Day Streak 🔥</div>
+                                    </div>
+                                </div>
+                                <span class="text-[11px] font-mono text-electricBlue font-bold">+300 XP</span>
+                            </div>
+
+                            <!-- Today Session List -->
+                            <div class="space-y-2">
+                                <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex justify-between">
+                                    <span>Today's Sessions</span>
+                                    <span class="text-electricBlue">Phase 2: Depth</span>
+                                </div>
+
+                                <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-neonEmerald"></span>
+                                        <div>
+                                            <div class="text-xs font-semibold text-white">Relational DB Concepts</div>
+                                            <div class="text-[10px] text-slate-400">08:30 AM · 90 mins</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] font-mono text-neonEmerald bg-neonEmerald/10 px-2 py-0.5 rounded-md">✓ Done</span>
+                                </div>
+
+                                <div class="p-2.5 rounded-xl bg-slate-900 border border-electricBlue/30 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-electricBlue animate-ping"></span>
+                                        <div>
+                                            <div class="text-xs font-semibold text-white">Coding: Dynamic Prog.</div>
+                                            <div class="text-[10px] text-slate-400">11:30 AM · 150 mins</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] font-mono text-electricBlue bg-electricBlue/10 px-2 py-0.5 rounded-md">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Anti-Bill Guarantee Callout -->
+    <section id="anti-bill" class="py-12 bg-slate-900/50 border-y border-slate-800/80">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slateCard to-slate-900 border border-neonEmerald/30 shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-neonEmerald/10 rounded-full blur-2xl"></div>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                    <div class="w-14 h-14 rounded-2xl bg-neonEmerald/15 border border-neonEmerald/40 flex items-center justify-center shrink-0 text-2xl">
+                        🛡️
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-xl font-bold text-white">The 100% Anti-Bill & Zero-Cost Architecture</h3>
+                            <span class="px-2.5 py-0.5 rounded-full bg-neonEmerald/20 text-neonEmerald font-mono text-xs font-bold border border-neonEmerald/40">Verified Safe</span>
+                        </div>
+                        <p class="text-sm text-slate-300 leading-relaxed">
+                            Most AI apps silently embed secret developer API keys that can be extracted to run up thousands of dollars in cloud bills. <strong>Focus Study contains ZERO hardcoded keys.</strong> Everything runs 100% locally on your phone's SQLite Room database. No subscription, no credit card, and zero cloud hosting costs forever.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature Showcase ("Bragging" Section) -->
+    <section id="features" class="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+            <h2 class="text-xs font-mono font-bold text-electricBlue uppercase tracking-widest">Built For Top Rankers</h2>
+            <p class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Everything You Need to Ace Your Syllabus.
+            </p>
+            <p class="text-slate-400 text-sm sm:text-base">
+                Engineered with senior architectural discipline. Zero bloated 3rd-party tracking SDKs, pure native Android performance.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- Card 1 -->
+            <div class="p-6 rounded-3xl bg-slateCard/70 border border-slate-800 transition duration-300 glow-card space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-electricBlue/10 border border-electricBlue/30 flex items-center justify-center text-2xl">
+                    ⏱️
+                </div>
+                <h3 class="text-lg font-bold text-white">Adaptive Focus Pomodoro</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Choose from Pomodoro Classic (25/5), Deep Sprints (45/10), or custom study intervals. Includes gentle audio bell cues, subtle vibration pulses, and auto-logging into your study database.
+                </p>
+                <div class="text-xs font-mono text-electricBlue flex items-center gap-1.5 font-semibold">
+                    <span>Sound & Haptic Engine</span>
+                    <span>→</span>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="p-6 rounded-3xl bg-slateCard/70 border border-slate-800 transition duration-300 glow-card space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-vibrantIndigo/10 border border-vibrantIndigo/30 flex items-center justify-center text-2xl">
+                    📅
+                </div>
+                <h3 class="text-lg font-bold text-white">6-Phase Strategic Planner</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Say goodbye to chaotic to-do lists. The mathematical planner slots your syllabus across 6 cognitive phases (Foundation, Depth, Synthesis, Speed, Peak, Exam Day) and reserves critical review buffer days.
+                </p>
+                <div class="text-xs font-mono text-vibrantIndigo flex items-center gap-1.5 font-semibold">
+                    <span>Deterministic Buffer Days</span>
+                    <span>→</span>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="p-6 rounded-3xl bg-slateCard/70 border border-slate-800 transition duration-300 glow-card space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-neonEmerald/10 border border-neonEmerald/30 flex items-center justify-center text-2xl">
+                    🎙️
+                </div>
+                <h3 class="text-lg font-bold text-white">Natural Language Voice Coach</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Don't waste time typing. Just tap the microphone and say: <em class="text-slate-200">"Doing coding from 11:30 to 2:00"</em>. The AI parser extracts the duration, logs the topic, updates your daily target, and gives you +300 XP!
+                </p>
+                <div class="text-xs font-mono text-neonEmerald flex items-center gap-1.5 font-semibold">
+                    <span>Offline Speech Parser</span>
+                    <span>→</span>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="p-6 rounded-3xl bg-slateCard/70 border border-slate-800 transition duration-300 glow-card space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-amberAlert/10 border border-amberAlert/30 flex items-center justify-center text-2xl">
+                    🔊
+                </div>
+                <h3 class="text-lg font-bold text-white">Spoken Daily Schedule (TTS)</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Ask your coach: <em class="text-slate-200">"Read my schedule"</em>. Native Android Text-to-Speech will read out your topics, times, and targets aloud while you prepare your morning coffee or sit at your desk.
+                </p>
+                <div class="text-xs font-mono text-amberAlert flex items-center gap-1.5 font-semibold">
+                    <span>Hands-Free Audio Reader</span>
+                    <span>→</span>
+                </div>
+            </div>
+
+            <!-- Card 5 -->
+            <div class="p-6 rounded-3xl bg-slateCard/70 border border-slate-800 transition duration-300 glow-card space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-2xl">
+                    🧠
+                </div>
+                <h3 class="text-lg font-bold text-white">Cognitive Chronotype Guard</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Analyzes your past study sessions to diagnose your biological alertness rhythm (Early Bird, Night Owl, or Adaptive Explorer). Warns you before late-night exhaustion sets in so your brain stays sharp.
+                </p>
+                <div class="text-xs font-mono text-pink-400 flex items-center gap-1.5 font-semibold">
+                    <span>Burnout Prevention Engine</span>
+                    <span>→</span>
+                </div>
+            </div>
+
+            <!-- Card 6 -->
+            <div class="p-6 rounded-3xl bg-slateCard/70 border border-slate-800 transition duration-300 glow-card space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-2xl">
+                    🏆
+                </div>
+                <h3 class="text-lg font-bold text-white">Scholar XP & Gamification</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Earn XP for every minute studied. Progress through 5 academic tiers from <em>Freshman Scholar</em> up to <em>Grandmaster Scholar</em>. Unlock achievement badges for consistency and streak defense.
+                </p>
+                <div class="text-xs font-mono text-purple-400 flex items-center gap-1.5 font-semibold">
+                    <span>5 Tiers + Milestone Badges</span>
+                    <span>→</span>
+                </div>
+            </div>
+
+            <!-- Card 7 -->
+            <div class="p-6 rounded-3xl bg-slateCard/70 border border-slate-800 transition duration-300 glow-card space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-2xl">
+                    🤝
+                </div>
+                <h3 class="text-lg font-bold text-white">Study Buddy Card Sharing</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Generate an instant accountability card showing your Scholar tier, verified study minutes, and active streak. Share it directly to WhatsApp, Instagram, or Telegram to challenge friends.
+                </p>
+                <div class="text-xs font-mono text-cyan-400 flex items-center gap-1.5 font-semibold">
+                    <span>Native Android Share Sheet</span>
+                    <span>→</span>
+                </div>
+            </div>
+
+            <!-- Card 8 -->
+            <div class="p-6 rounded-3xl bg-slateCard/70 border border-slate-800 transition duration-300 glow-card space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-2xl">
+                    🌓
+                </div>
+                <h3 class="text-lg font-bold text-white">Dark Menu & Midnight OLED</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Designed for late-night exam prep. Includes Dark Slate, Paper Light, and true Midnight OLED Pure Black (#000000) that shuts off pixels and saves up to 40% phone battery on AMOLED displays.
+                </p>
+                <div class="text-xs font-mono text-indigo-400 flex items-center gap-1.5 font-semibold">
+                    <span>Pure Black AMOLED Mode</span>
+                    <span>→</span>
+                </div>
+            </div>
+
+            <!-- Card 9 -->
+            <div class="p-6 rounded-3xl bg-slateCard/70 border border-slate-800 transition duration-300 glow-card space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-2xl">
+                    💾
+                </div>
+                <h3 class="text-lg font-bold text-white">1-Tap Backup & Restore</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Full JSON data export and import. Your notes, exams, dates, and session history can be backed up to your internal storage or transferred to another device in seconds. Zero cloud lock-in.
+                </p>
+                <div class="text-xs font-mono text-emerald-400 flex items-center gap-1.5 font-semibold">
+                    <span>Local JSON Serialization</span>
+                    <span>→</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- How to Install in 3 Easy Steps -->
+    <section id="install" class="py-20 bg-slate-900/60 border-t border-slate-800">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-14 space-y-3">
+                <span class="text-xs font-mono font-bold text-electricBlue uppercase tracking-wider">Quick Installation</span>
+                <h2 class="text-3xl font-extrabold text-white">How to Install APK on Android (3 Steps)</h2>
+                <p class="text-sm text-slate-400">Since this is an independent version 1.0 beta build, Android will ask you for one-time permission to install.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Step 1 -->
+                <div class="p-6 rounded-3xl bg-slateCard border border-slate-800 space-y-3 relative">
+                    <div class="w-10 h-10 rounded-xl bg-electricBlue/20 text-electricBlue font-bold flex items-center justify-center text-lg font-mono">1</div>
+                    <h3 class="text-base font-bold text-white">Download the File</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Tap the <strong>Download Release APK</strong> button on this page. If Chrome or Samsung Internet shows <em class="text-slate-300">"File might be harmful"</em>, tap <strong>Download anyway</strong> (it is completely safe).
+                    </p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="p-6 rounded-3xl bg-slateCard border border-slate-800 space-y-3 relative">
+                    <div class="w-10 h-10 rounded-xl bg-vibrantIndigo/20 text-vibrantIndigo font-bold flex items-center justify-center text-lg font-mono">2</div>
+                    <h3 class="text-base font-bold text-white">Allow Installation</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Open the downloaded APK from your notifications or Files app. If prompted with <em class="text-slate-300">"Install unknown apps"</em>, toggle <strong>Allow from this source</strong> in Settings.
+                    </p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="p-6 rounded-3xl bg-slateCard border border-slate-800 space-y-3 relative">
+                    <div class="w-10 h-10 rounded-xl bg-neonEmerald/20 text-neonEmerald font-bold flex items-center justify-center text-lg font-mono">3</div>
+                    <h3 class="text-base font-bold text-white">Tap Install & Open</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Tap <strong>Install</strong>. If Google Play Protect displays a prompt, tap <strong>"More details → Install anyway"</strong>. Open Focus Study, set your exam date, and start studying!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Install CTA -->
+            <div class="mt-10 text-center">
+                <a href="downloads/FocusStudy-v1.0.0-release.apk" download="FocusStudy-v1.0.0-release.apk" class="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-2xl bg-electricBlue text-obsidian font-extrabold text-sm hover:opacity-90 shadow-lg shadow-electricBlue/20 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Download FocusStudy-v1.0.0-release.apk (12.3 MB)</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feedback & Community Section -->
+    <section id="feedback" class="py-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="p-8 sm:p-12 rounded-3xl bg-gradient-to-b from-slateCard to-slate-950 border border-slate-800 shadow-2xl space-y-8">
+            <div class="text-center space-y-3">
+                <span class="text-xs font-mono font-bold text-neonEmerald uppercase tracking-wider">Creator Feedback Loop</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Help Surya Make Focus Study Better</h2>
+                <p class="text-sm text-slate-400 max-w-xl mx-auto">
+                    You're using Version 1.0.0. Encountered a bug? Want a specific feature for your exams? Send your honest thoughts in 30 seconds.
+                </p>
+            </div>
+
+            <!-- Interactive Feedback Form -->
+            <form id="feedbackForm" onsubmit="submitFeedback(event)" class="space-y-6">
+                <!-- Rating Stars -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 text-center">How do you rate the v1.0.0 build?</label>
+                    <div class="flex justify-center gap-3 text-2xl" id="starRating">
+                        <button type="button" onclick="setRating(1)" class="star text-slate-600 hover:text-amber-400 transition">★</button>
+                        <button type="button" onclick="setRating(2)" class="star text-slate-600 hover:text-amber-400 transition">★</button>
+                        <button type="button" onclick="setRating(3)" class="star text-slate-600 hover:text-amber-400 transition">★</button>
+                        <button type="button" onclick="setRating(4)" class="star text-slate-600 hover:text-amber-400 transition">★</button>
+                        <button type="button" onclick="setRating(5)" class="star text-amber-400 transition">★</button>
+                    </div>
+                </div>
+
+                <!-- Feedback Tag Chips -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">What did you like / want improved?</label>
+                    <div class="flex flex-wrap gap-2 text-xs" id="tagList">
+                        <button type="button" onclick="toggleTag(this)" class="tag px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:border-electricBlue transition">Adaptive Planner</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:border-electricBlue transition">Pomodoro Timer</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:border-electricBlue transition">Voice Study Logging</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:border-electricBlue transition">Scholar XP / Streaks</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:border-electricBlue transition">Midnight OLED Dark Mode</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:border-electricBlue transition">Needs Better Widget</button>
+                    </div>
+                </div>
+
+                <!-- Feedback Text Area -->
+                <div>
+                    <label for="feedbackText" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Your Detailed Feedback & Suggestions</label>
+                    <textarea id="feedbackText" rows="3" required placeholder="What worked well? What felt confusing? What exam are you preparing for?" class="w-full px-4 py-3 rounded-2xl bg-slate-900 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-electricBlue transition"></textarea>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button type="submit" class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-neonEmerald to-teal-500 text-obsidian font-extrabold text-sm hover:opacity-90 transition flex items-center justify-center gap-2">
+                        <span>Send Feedback to Surya</span>
+                        <span>✉️</span>
+                    </button>
+                    <button type="button" onclick="shareOnWhatsApp()" class="py-3.5 px-6 rounded-2xl bg-[#25D366]/20 border border-[#25D366]/40 text-[#25D366] font-bold text-sm hover:bg-[#25D366]/30 transition flex items-center justify-center gap-2">
+                        <span>Share on WhatsApp</span>
+                    </button>
+                </div>
+            </form>
+
+            <div id="feedbackThanks" class="hidden text-center py-6 space-y-2">
+                <div class="text-3xl">🎉</div>
+                <h4 class="text-lg font-bold text-white">Thank You for Your Feedback!</h4>
+                <p class="text-xs text-slate-400">Opening your mail client or WhatsApp so Surya receives your message directly.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-16 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/80">
+        <div class="text-center mb-12 space-y-2">
+            <span class="text-xs font-mono font-bold text-electricBlue uppercase tracking-wider">Got Questions?</span>
+            <h2 class="text-3xl font-extrabold text-white">Frequently Asked Questions</h2>
+        </div>
+
+        <div class="space-y-4">
+            <div class="p-5 rounded-2xl bg-slateCard/60 border border-slate-800 space-y-2">
+                <h3 class="text-base font-bold text-white">Is Focus Study really 100% free with no hidden charges?</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Yes. There are zero subscriptions, zero paywalls, zero ads, and zero credit card requirements. The app is built with an offline-first Room database, meaning it costs the developer \$0 to run and costs you \$0 to use.
+                </p>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-slateCard/60 border border-slate-800 space-y-2">
+                <h3 class="text-base font-bold text-white">Does Focus Study work without an Internet connection?</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Yes! You can put your phone on Airplane Mode and all features—including the Pomodoro timer, 6-phase adaptive schedule generator, daily session tracking, syllabus editor, and Scholar XP—will work 100% flawlessly.
+                </p>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-slateCard/60 border border-slate-800 space-y-2">
+                <h3 class="text-base font-bold text-white">What phones are supported?</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Any Android phone or tablet running Android 8.0 (Oreo) or higher up to Android 15. Tested thoroughly on Samsung Galaxy, Google Pixel, OnePlus, Xiaomi, and Motorola.
+                </p>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-slateCard/60 border border-slate-800 space-y-2">
+                <h3 class="text-base font-bold text-white">Why install via APK instead of Play Store right now?</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    This is the Version 1.0.0 private beta! You are among the first people to test and shape the app before we publish to the Google Play Store. You have direct input on what features get built next.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-slate-800/80 bg-slate-950/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-500">
+            <div class="flex items-center space-x-3">
+                <span class="text-lg">🎯</span>
+                <span class="text-slate-300 font-bold">Focus Study OS v1.0.0</span>
+                <span>•</span>
+                <span>Built by Surya</span>
+            </div>
+
+            <div class="flex items-center space-x-6">
+                <a href="#download" class="hover:text-electricBlue transition">Download APK</a>
+                <a href="#features" class="hover:text-electricBlue transition">Features</a>
+                <a href="#feedback" class="hover:text-electricBlue transition">Give Feedback</a>
+                <a href="https://github.com/surypratapsingh" target="_blank" class="hover:text-electricBlue transition">GitHub Profile</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Interactive Scripts -->
+    <script>
+        let currentRating = 5;
+        let selectedTags = [];
+
+        function setRating(val) {
+            currentRating = val;
+            const stars = document.querySelectorAll('#starRating button');
+            stars.forEach((star, index) => {
+                if (index < val) {
+                    star.className = 'star text-amber-400 transition';
+                } else {
+                    star.className = 'star text-slate-600 hover:text-amber-400 transition';
+                }
+            });
+        }
+
+        function toggleTag(btn) {
+            const tag = btn.innerText;
+            if (selectedTags.includes(tag)) {
+                selectedTags = selectedTags.filter(t => t !== tag);
+                btn.classList.remove('bg-electricBlue/20', 'text-electricBlue', 'border-electricBlue');
+                btn.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
+            } else {
+                selectedTags.push(tag);
+                btn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
+                btn.classList.add('bg-electricBlue/20', 'text-electricBlue', 'border-electricBlue');
+            }
+        }
+
+        function submitFeedback(e) {
+            e.preventDefault();
+            const text = document.getElementById('feedbackText').value;
+            const tags = selectedTags.join(', ');
+            const subject = encodeURIComponent(`Focus Study v1.0.0 Feedback [${currentRating}/5 Stars]`);
+            const body = encodeURIComponent(
+                `Rating: ${currentRating}/5 Stars\n` +
+                `Liked features: ${tags || 'General'}\n\n` +
+                `Comments:\n${text}\n\n` +
+                `Sent from Focus Study landing page`
+            );
+
+            // Open mailto
+            window.location.href = `mailto:suryapratap@example.com?subject=${subject}&body=${body}`;
+
+            document.getElementById('feedbackForm').classList.add('hidden');
+            document.getElementById('feedbackThanks').classList.remove('hidden');
+        }
+
+        function shareOnWhatsApp() {
+            const text = encodeURIComponent(
+                "Hey! Check out Focus Study v1.0.0 — an intelligent offline Android app for exam preparation. " +
+                "Adaptive Pomodoro timer, 6-phase revision planner, and voice coach! Download the APK here: " +
+                window.location.href
+            );
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        function shareWebsite() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Focus Study OS v1.0.0',
+                    text: 'Master any exam without the burnout. 100% offline-first study companion.',
+                    url: window.location.href,
+                }).catch(() => {});
+            } else {
+                shareOnWhatsApp();
+            }
+        }
+    </script>
+</body>
+</html>

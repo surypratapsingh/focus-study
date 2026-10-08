@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Spec §52 & §53: All user data (exams, syllabus, study plans, sessions, attempts)
+    // is scoped under /users/{userId} and strictly owned by the authenticated student.
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // Student profiles
+      match /profile/{profileId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Exams & Syllabus hierarchy
+      match /exams/{examId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /subjects/{subjectId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /units/{unitId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /topics/{topicId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Master study plans and daily plan days
+      match /studyPlans/{planId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /planDays/{dayId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /studySessions/{sessionId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Immutable study attempts & analytics snapshots
+      match /studyAttempts/{attemptId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /progressSnapshots/{snapshotId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /planVersions/{versionId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

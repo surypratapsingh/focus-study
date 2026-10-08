@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Focus Study</string>
+    <string name="widget_title">Focus Study: Today &amp; Next Session</string>
+    <string name="widget_description">Displays exam countdown, today\'s target progress, and your next priority session.</string>
+    <string name="widget_header_title">FOCUS STUDY</string>
+    <string name="widget_exam_countdown_default">Exam in &#8212; days</string>
+    <string name="widget_progress_default">Today: 0 / 180 min (0%)</string>
+    <string name="widget_next_session_default">Next: Ready to start focus session</string>
+    <string name="widget_study_cta">Study →</string>
+</resources>
