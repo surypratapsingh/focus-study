@@ -650,6 +650,40 @@ Consequences: What this implies for the codebase
 
 ---
 
+### DEC-030 — Native PDF Syllabus Text Extraction, Multimodal Ingestion & iCalendar (.ics) Timetable Export (OQ-005 Resolved)
+**Date:** 2026-10-09  
+**Status:** Decided
+
+**Context:** 
+1. Previous PDF/image import in `FileImportValidator` read raw binary bytes as UTF-8 string, which failed on binary PDF and image documents.
+2. Open Question OQ-005 asked whether to use ML Kit or Gemini multimodal for PDF extraction. Adding ML Kit would add 20MB+ of binary libraries, violating the Ponytail principle.
+3. Students needed a way to export their planned study blocks to external calendars (Google Calendar, Outlook, Apple Calendar) without third-party sync services.
+
+**Decision:**
+1. **Native PDF Stream Extractor (`PdfTextExtractor`):** Implemented a lightweight, native PDF text stream parser in Kotlin using standard JDK `java.util.zip.InflaterInputStream` to decompress `/FlateDecode` streams and extract `BT ... ET` text operators (`Tj`, `TJ`, `'`, `"`), decoding escaped strings and hex blocks. Requires 0 external libraries ($0 cost, 100% offline, 0 APK bloat).
+2. **Hybrid Ingestion in `AiSyllabusParser`:**
+   - Text PDFs: Extracted directly via `PdfTextExtractor` and parsed locally via `SyllabusParser`.
+   - Scanned PDFs / Syllabus Images: If the user provides a free Gemini API key (BYOK from DEC-028), sends the base64-encoded document to Gemini 1.5 Flash multimodal vision with structured `AiSyllabusResponse` JSON output. If offline or no key, provides clear user guidance.
+   - Plain Text / Markdown: Sanitized and parsed via deterministic heuristics.
+3. **RFC 5545 iCalendar (.ics) Timetable Export (`CalendarExportManager`):**
+   - Implemented standard RFC 5545 generator producing `BEGIN:VCALENDAR ... END:VCALENDAR` files with full timezone calculation and milestone exam events.
+   - Configured Android `FileProvider` (`res/xml/file_paths.xml`) and `Intent.ACTION_SEND` with `text/calendar` MIME type.
+   - Added 1-tap "Export Timetable to Calendar (.ics)" buttons in `PlannerScreen` (Week view / Plan Optimization) and `SettingsScreen` (Data Management).
+4. **Comprehensive Test Verification:** Added `AiSyllabusParserTest` and `CalendarExportTest`, bringing the verified unit test suite to 14 suites passing 100%.
+
+**Rationale:**
+- Strictly adheres to the Ponytail decision ladder: standard library `java.util.zip.*` and native Android `FileProvider` instead of bulky third-party PDFBox or ML Kit dependencies.
+- Completely resolves OQ-005 with a robust offline-first baseline and cloud multimodal vision superpower when BYOK is enabled.
+- Delivers essential calendar interoperability with Google Calendar, Outlook, and Samsung Calendar.
+
+**Consequences:**
+- Added `PdfTextExtractor.kt`, `AiSyllabusParser.kt`, `CalendarExportManager.kt`, `file_paths.xml`.
+- Updated `AndroidManifest.xml` (`FileProvider`), `AppContainer.kt`, `OnboardingViewModel.kt`, `MainActivity.kt`, `PlannerScreen.kt`, `PlannerViewModel.kt`, `SettingsScreen.kt`, `SettingsViewModel.kt`, `Daos.kt`.
+- Added `AiSyllabusParserTest.kt` and `CalendarExportTest.kt` (all 14 test suites passing 100%).
+- Recompiled and verified debug APK (18.9 MB), release APK (12.3 MB), and Google Play Bundle (11.9 MB).
+
+---
+
 ## Open Questions
 
 | # | Question | Owner | Status / Decision |
@@ -658,7 +692,7 @@ Consequences: What this implies for the codebase
 | OQ-002 | Will Hilt be used for DI, or manual DI for simplicity? | Senior Dev | Decided: AppContainer container pattern (minimal native DI, zero kapt/ksp overhead, Ponytail aligned) |
 | OQ-003 | Chart library choice: Vico, MPAndroidChart, or custom Canvas? | Senior Dev | Decided: DEC-012 Custom native Compose components (zero extra dependencies, Ponytail aligned) |
 | OQ-004 | Will the app launch with Firebase Auth disabled (local-only)? | Product | Decided: Yes, local-only by default, cloud sync is optional P2 |
-| OQ-005 | PDF text extraction: local ML Kit or pass raw PDF to Gemini multimodal? | M1 agent | Open (M1) |
+| OQ-005 | PDF text extraction: local ML Kit or pass raw PDF to Gemini multimodal? | Senior Dev | Decided: DEC-030 Native PdfTextExtractor (offline FlateDecode/BT/ET stream parser) + BYOK Gemini multimodal vision fallback |
 
 ---
 

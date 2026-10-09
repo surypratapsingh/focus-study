@@ -717,6 +717,18 @@ fun SettingsScreen(
                                 Text("Restore Backup")
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedButton(
+                            onClick = { viewModel.exportCalendar(context) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Export Timetable to Calendar (.ics)")
+                        }
                     }
                 }
             }

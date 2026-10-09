@@ -15,6 +15,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.focusstudy.app.core.security.FileImportValidator
+import com.focusstudy.app.core.ai.AiSyllabusParser
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -42,7 +43,8 @@ data class OnboardingUiState(
 
 class OnboardingViewModel(
     private val db: AppDatabase,
-    private val preferencesManager: UserPreferencesManager
+    private val preferencesManager: UserPreferencesManager,
+    private val aiSyllabusParser: AiSyllabusParser = AiSyllabusParser(db, preferencesManager)
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OnboardingUiState())
@@ -162,32 +164,26 @@ class OnboardingViewModel(
                     return@launch
                 }
 
-                // 2. Read safe content from stream with security bounds
+                // 2. Read bytes and parse via AiSyllabusParser (native PDF extractor + optional Gemini multimodal)
                 contentResolver.openInputStream(uri)?.use { inputStream ->
-                    val readResult = FileImportValidator.readSafeTextFromStream(inputStream)
-                    if (!readResult.isValid || readResult.sanitizedText == null) {
+                    val bytes = inputStream.readBytes()
+                    val parseResult = aiSyllabusParser.parseDocument(
+                        bytes = bytes,
+                        mimeType = mimeType,
+                        examTitle = _uiState.value.examTitle
+                    )
+
+                    if (!parseResult.isValid || parseResult.topics.isEmpty()) {
                         _uiState.value = _uiState.value.copy(
                             isImporting = false,
-                            importErrorMessage = readResult.errorMessage ?: "Could not extract readable text from document."
-                        )
-                        return@launch
-                    }
-
-                    val sanitizedText = readResult.sanitizedText
-                    // 3. Parse syllabus hierarchy using schema-constrained or heuristic parser
-                    val parsed = SyllabusParser.parseDocument(sanitizedText, mimeType)
-
-                    if (parsed.isEmpty()) {
-                        _uiState.value = _uiState.value.copy(
-                            isImporting = false,
-                            importErrorMessage = "No structured topics detected. Please check file format."
+                            importErrorMessage = parseResult.message.ifBlank { "No structured topics detected. Please check file format." }
                         )
                     } else {
                         _uiState.value = _uiState.value.copy(
                             isImporting = false,
-                            syllabusRawText = sanitizedText,
-                            parsedTopics = parsed,
-                            importSuccessMessage = "Successfully imported ${parsed.size} topics from $fileName"
+                            syllabusRawText = parseResult.extractedRawText.ifBlank { _uiState.value.syllabusRawText },
+                            parsedTopics = parseResult.topics,
+                            importSuccessMessage = "${parseResult.message} ($fileName)"
                         )
                     }
                 } ?: run {

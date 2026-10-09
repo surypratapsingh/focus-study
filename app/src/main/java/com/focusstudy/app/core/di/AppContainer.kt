@@ -9,6 +9,8 @@ import com.focusstudy.app.core.auth.AuthManager
 import com.focusstudy.app.core.auth.LocalAuthManager
 import com.focusstudy.app.core.database.AppDatabase
 import com.focusstudy.app.core.datastore.UserPreferencesManager
+import com.focusstudy.app.core.ai.AiSyllabusParser
+import com.focusstudy.app.core.calendar.CalendarExportManager
 import com.focusstudy.app.core.repository.*
 
 interface AppContainer {
@@ -22,6 +24,8 @@ interface AppContainer {
     val aiReplanService: AiReplanService
     val aiInsightService: AiInsightService
     val aiCoachService: AiCoachService
+    val aiSyllabusParser: AiSyllabusParser
+    val calendarExportManager: CalendarExportManager
     val authManager: AuthManager
 }
 
@@ -64,6 +68,14 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val aiCoachService: AiCoachService by lazy {
         AiCoachService(database, userPreferencesManager)
+    }
+
+    override val aiSyllabusParser: AiSyllabusParser by lazy {
+        AiSyllabusParser(database, userPreferencesManager)
+    }
+
+    override val calendarExportManager: CalendarExportManager by lazy {
+        CalendarExportManager
     }
 
     override val authManager: AuthManager by lazy {

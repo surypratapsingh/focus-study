@@ -113,6 +113,12 @@ class PlannerViewModel(
                                     _uiState.update { it.copy(weekDays = planDays.take(7)) }
                                 }
                             }
+
+                            launch {
+                                db.studyPlanDao().getAllSessions().collect { all ->
+                                    _uiState.update { it.copy(allSessions = all) }
+                                }
+                            }
                         }
                     }
                 }

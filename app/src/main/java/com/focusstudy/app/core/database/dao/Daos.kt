@@ -102,6 +102,9 @@ interface StudyPlanDao {
     @Query("SELECT * FROM study_sessions WHERE scheduledDate = :dateString ORDER BY startTime ASC")
     fun getSessionsForDate(dateString: String): Flow<List<StudySession>>
 
+    @Query("SELECT * FROM study_sessions ORDER BY scheduledDate ASC, startTime ASC")
+    fun getAllSessions(): Flow<List<StudySession>>
+
     @Query("SELECT * FROM study_sessions WHERE id = :sessionId")
     suspend fun getSessionById(sessionId: String): StudySession?
 

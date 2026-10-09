@@ -20,7 +20,8 @@ class MainActivity : ComponentActivity() {
         val appContainer = (application as FocusStudyApp).container
         val onboardingViewModel = OnboardingViewModel(
             db = appContainer.database,
-            preferencesManager = appContainer.userPreferencesManager
+            preferencesManager = appContainer.userPreferencesManager,
+            aiSyllabusParser = appContainer.aiSyllabusParser
         )
 
         setContent {

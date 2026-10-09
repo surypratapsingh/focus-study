@@ -15,10 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.focusstudy.app.core.ai.RiskLevel
+import com.focusstudy.app.core.calendar.CalendarExportManager
 import com.focusstudy.app.core.database.entity.AiPlanVersion
 import com.focusstudy.app.core.database.entity.StudyPlanDay
 import com.focusstudy.app.core.database.entity.StudySession
@@ -47,6 +49,19 @@ fun PlannerScreen(
     var wideRightTab by remember { mutableIntStateOf(0) }
     val phoneTabs = listOf("Today", "Week", "Exam Roadmap")
     val wideRightTabs = listOf("Day Schedule", "Week Overview")
+    val context = LocalContext.current
+
+    val exportCalendarAction: () -> Unit = {
+        val sessionsToExport = if (state.allSessions.isNotEmpty()) state.allSessions else state.daySessions
+        val ics = CalendarExportManager.generateIcsCalendar(
+            exam = state.exam,
+            sessions = sessionsToExport,
+            topicsMap = state.topicsMap,
+            subjectsMap = state.subjectsMap
+        )
+        val shareIntent = CalendarExportManager.createShareIntent(context, ics)
+        context.startActivity(shareIntent)
+    }
 
     // Replan Dialog
     if (state.isReplanDialogVisible && state.replanProposal != null) {
@@ -186,7 +201,8 @@ fun PlannerScreen(
                             PlanOptimizationCard(
                                 state = state,
                                 onRebalance = { viewModel.regeneratePlan() },
-                                onAdaptiveReplan = { viewModel.openReplanProposal() }
+                                onAdaptiveReplan = { viewModel.openReplanProposal() },
+                                onExportCalendar = exportCalendarAction
                             )
                         }
                     }
@@ -270,7 +286,8 @@ fun PlannerScreen(
                             PlanOptimizationCard(
                                 state = state,
                                 onRebalance = { viewModel.regeneratePlan() },
-                                onAdaptiveReplan = { viewModel.openReplanProposal() }
+                                onAdaptiveReplan = { viewModel.openReplanProposal() },
+                                onExportCalendar = exportCalendarAction
                             )
                         }
                     }
@@ -468,7 +485,8 @@ private fun WeekStripCard(state: PlannerUiState, onSelectDate: (String) -> Unit)
 private fun PlanOptimizationCard(
     state: PlannerUiState,
     onRebalance: () -> Unit,
-    onAdaptiveReplan: () -> Unit
+    onAdaptiveReplan: () -> Unit,
+    onExportCalendar: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -522,6 +540,16 @@ private fun PlanOptimizationCard(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Adaptive Replan")
                 }
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedButton(
+                onClick = onExportCalendar,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Export Timetable to Calendar (.ics)")
             }
         }
     }

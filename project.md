@@ -132,17 +132,17 @@ UserSettingsRepository
 
 | # | Name | Status |
 |---|---|---|
-| M0 | Project foundation + design system | 🔲 Not started |
-| M1 | Onboarding + syllabus ingestion | 🔲 Not started |
-| M2 | Deterministic planner + schedule UI | 🔲 Not started |
-| M3 | Gemini planning + structured outputs | 🔲 Not started |
-| M4 | Focus timer + session tracking | 🔲 Not started |
-| M5 | Progress + analytics | 🔲 Not started |
-| M6 | Adaptive AI replanning | 🔲 Not started |
-| M7 | AI coach | 🔲 Not started |
-| M8 | Notifications + widgets + background jobs | 🔲 Not started |
-| M9 | Security hardening + offline recovery | 🔲 Not started |
-| M10 | Release polish | 🔲 Not started |
+| M0 | Project foundation + design system | ✅ Completed |
+| M1 | Onboarding + syllabus ingestion | ✅ Completed |
+| M2 | Deterministic planner + schedule UI | ✅ Completed |
+| M3 | Gemini planning + structured outputs | ✅ Completed |
+| M4 | Focus timer + session tracking | ✅ Completed |
+| M5 | Progress + analytics | ✅ Completed |
+| M6 | Adaptive AI replanning | ✅ Completed |
+| M7 | AI coach | ✅ Completed |
+| M8 | Notifications + widgets + background jobs | ✅ Completed |
+| M9 | Security hardening + offline recovery | ✅ Completed |
+| M10 | Release polish | ✅ Completed |
 
 ---
 

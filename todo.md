@@ -202,5 +202,16 @@
 - [x] **FSTUDY-019-03** — Extracted widget layout strings to `strings.xml` and eliminated typography lint warnings
 - [x] **FSTUDY-019-04** — Fresh verified production packages generated in `distribution/` (debug APK 18.9 MB, release APK 12.3 MB, Google Play AAB 11.9 MB)
 
+---
+
+## 📑 Ingest Hardening & Calendar Timetable Interoperability (DEC-030)
+
+- [x] **FSTUDY-020-01** — Native PDF stream text extractor (`PdfTextExtractor`) with standard JDK `Inflater` and `BT ... ET` text operator parsing
+- [x] **FSTUDY-020-02** — Hybrid `AiSyllabusParser` supporting offline deterministic syllabus extraction + BYOK Gemini 1.5 Flash multimodal vision (OQ-005 resolved)
+- [x] **FSTUDY-020-03** — RFC 5545 iCalendar (`.ics`) generator (`CalendarExportManager`) with exam milestone and study block event mapping
+- [x] **FSTUDY-020-04** — Android `FileProvider` (`file_paths.xml`) and 1-tap calendar export in `PlannerScreen` (Week view) and `SettingsScreen` (Data Management)
+- [x] **FSTUDY-020-05** — 14 unit test suites passing 100% with fresh verified production packages (debug APK 18.9 MB, release APK 12.3 MB, Google Play AAB 11.9 MB)
+
+
 
 

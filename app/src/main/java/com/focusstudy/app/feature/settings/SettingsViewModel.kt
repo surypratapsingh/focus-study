@@ -1,15 +1,18 @@
 package com.focusstudy.app.feature.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.focusstudy.app.core.backup.DataBackupManager
 import com.focusstudy.app.core.backup.ImportResult
+import com.focusstudy.app.core.calendar.CalendarExportManager
 import com.focusstudy.app.core.database.AppDatabase
 import com.focusstudy.app.core.datastore.UserPreferences
 import com.focusstudy.app.core.repository.UserSettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 data class SettingsUiState(
@@ -125,6 +128,38 @@ class SettingsViewModel(
                 _uiState.value = _uiState.value.copy(
                     isImporting = false,
                     importResult = ImportResult(false, "Import failed: ${e.localizedMessage}")
+                )
+            }
+        }
+    }
+
+    fun exportCalendar(context: Context) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isExporting = true, exportMessage = null)
+            try {
+                val exam = db.examDao().getPrimaryExam().firstOrNull()
+                val sessions = db.studyPlanDao().getAllSessions().firstOrNull() ?: emptyList()
+                val topics = db.syllabusDao().getAllTopics().firstOrNull() ?: emptyList()
+                val topicsMap = topics.associateBy { it.id }
+                val subjects = if (exam != null) db.syllabusDao().getSubjectsForExam(exam.id).firstOrNull() ?: emptyList() else emptyList()
+                val subjectsMap = subjects.associateBy { it.id }
+
+                val ics = CalendarExportManager.generateIcsCalendar(
+                    exam = exam,
+                    sessions = sessions,
+                    topicsMap = topicsMap,
+                    subjectsMap = subjectsMap
+                )
+                val shareIntent = CalendarExportManager.createShareIntent(context, ics)
+                context.startActivity(shareIntent)
+                _uiState.value = _uiState.value.copy(
+                    isExporting = false,
+                    exportMessage = "Calendar timetable (.ics) generated with ${sessions.size} study sessions."
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isExporting = false,
+                    exportMessage = "Calendar export failed: ${e.localizedMessage}"
                 )
             }
         }
