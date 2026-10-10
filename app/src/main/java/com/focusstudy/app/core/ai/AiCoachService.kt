@@ -656,9 +656,10 @@ class AiCoachService(
             return answerPrompt(trimmed, context)
         }
 
-        // 2. Resolve BYOK API key (explicit parameter or local UserPreferences)
+        // 2. Resolve API key (explicit parameter, local UserPreferences, or default embedded key)
         val resolvedKey = apiKeyOverride?.trim()?.ifBlank { null }
             ?: userPreferencesManager?.userPreferencesFlow?.firstOrNull()?.customGeminiApiKey?.trim()?.ifBlank { null }
+            ?: AiModelConfig.DEFAULT_GEMINI_API_KEY.trim().ifBlank { null }
 
         if (!resolvedKey.isNullOrBlank()) {
             try {

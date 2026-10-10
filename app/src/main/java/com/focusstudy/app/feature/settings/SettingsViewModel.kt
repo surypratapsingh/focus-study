@@ -165,7 +165,19 @@ class SettingsViewModel(
         }
     }
 
+    fun restartSetup(clearDatabase: Boolean = false) {
+        viewModelScope.launch {
+            if (clearDatabase) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    db.clearAllTables()
+                }
+            }
+            settingsRepository.setOnboardingCompleted(false)
+        }
+    }
+
     fun clearFeedback() {
         _uiState.value = _uiState.value.copy(exportMessage = null, importResult = null, exportedJson = null)
     }
 }
+

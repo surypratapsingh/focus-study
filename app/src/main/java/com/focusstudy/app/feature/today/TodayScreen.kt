@@ -475,32 +475,47 @@ private fun NextSessionCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 StatusPill(
-                    text = "NEXT SESSION",
+                    text = if (state.sessions.isEmpty()) "SCHEDULE STATUS" else "NEXT SESSION",
                     containerColor = WarningAmber.copy(alpha = 0.15f),
                     contentColor = WarningAmber
                 )
-                Text(
-                    text = "${state.nextSession?.durationMinutes ?: 45} min",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium
-                )
+                if (state.nextSession != null) {
+                    Text(
+                        text = "${state.nextSession.durationMinutes} min",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(8.dp))
 
             val nextTopicTitle = state.nextTopic?.name ?: "All today's sessions complete!"
             val nextSubjectTitle = state.nextSubject?.name ?: "Review"
             Text(
-                text = if (state.nextSession != null) "$nextSubjectTitle — $nextTopicTitle" else "All sessions done for today! 🎉",
+                text = when {
+                    state.nextSession != null -> "$nextSubjectTitle — $nextTopicTitle"
+                    state.sessions.isEmpty() -> "No Study Sessions Yet"
+                    else -> "All sessions done for today! 🎉"
+                },
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
+            if (state.sessions.isEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Visit the Plan tab to generate today's schedule or update your syllabus topics.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (state.nextSession != null) {
                 Text(
-                    text = state.nextSession?.reason.takeUnless { it.isNullOrBlank() }
+                    text = state.nextSession.reason.takeUnless { it.isNullOrBlank() }
                         ?: "High exam priority with upcoming revision milestone",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),

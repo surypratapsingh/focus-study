@@ -2,6 +2,7 @@ package com.focusstudy.app.feature.ai
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
@@ -9,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -16,9 +18,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,9 +33,11 @@ import androidx.compose.ui.unit.dp
 import com.focusstudy.app.core.ai.CoachAction
 import com.focusstudy.app.core.design.theme.StatusPill
 import com.focusstudy.app.core.design.theme.SuccessGreen
+import com.focusstudy.app.core.design.theme.WarningAmber
 import com.focusstudy.app.core.di.AppContainer
 import com.focusstudy.app.feature.common.AppTutorialDialog
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @Composable
 fun AiCoachScreen(
@@ -44,9 +48,15 @@ fun AiCoachScreen(
     val state by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    val preferences by appContainer.userPreferencesManager.userPreferencesFlow.collectAsState(initial = null)
+    val isGeminiActive = !preferences?.customGeminiApiKey.isNullOrBlank() || com.focusstudy.app.core.ai.AiModelConfig.DEFAULT_GEMINI_API_KEY.isNotBlank()
 
     var inputText by remember { mutableStateOf("") }
     var showTutorialDialog by remember { mutableStateOf(false) }
+    var showApiKeyDialog by remember { mutableStateOf(false) }
+    var tempApiKey by remember { mutableStateOf("") }
 
     // Text to Speech Engine
     var tts: TextToSpeech? by remember { mutableStateOf(null) }
@@ -147,12 +157,29 @@ fun AiCoachScreen(
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    StatusPill(
-                        text = "Voice Active",
-                        containerColor = SuccessGreen.copy(alpha = 0.15f),
-                        contentColor = SuccessGreen,
-                        icon = Icons.Default.Mic
-                    )
+                    if (isGeminiActive) {
+                        StatusPill(
+                            text = "Gemini Flash",
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            icon = Icons.Default.AutoAwesome
+                        )
+                    } else {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = WarningAmber.copy(alpha = 0.15f),
+                            modifier = Modifier.clickable { showApiKeyDialog = true }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Key, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(12.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Connect Free AI", style = MaterialTheme.typography.labelSmall, color = WarningAmber, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(10.dp))
@@ -163,6 +190,15 @@ fun AiCoachScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
+            if (!isGeminiActive) {
+                item {
+                    SuggestionChip(
+                        onClick = { showApiKeyDialog = true },
+                        label = { Text("⚡ Connect Free Gemini Key", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) },
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                }
+            }
             item {
                 SuggestionChip(
                     onClick = { showTutorialDialog = true },
@@ -358,6 +394,64 @@ fun AiCoachScreen(
 
         if (showTutorialDialog) {
             AppTutorialDialog(onDismiss = { showTutorialDialog = false })
+        }
+
+        if (showApiKeyDialog) {
+            AlertDialog(
+                onDismissRequest = { showApiKeyDialog = false },
+                icon = { Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                title = { Text("Connect Free Gemini AI", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            "Google provides free Gemini 1.5 Flash API access (15 queries/minute, $0 cost, no credit card required) for personal & student use.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        FilledTonalButton(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/app/apikey"))
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Get Free Key from Google ↗")
+                        }
+                        OutlinedTextField(
+                            value = tempApiKey,
+                            onValueChange = { tempApiKey = it },
+                            label = { Text("Paste Gemini API Key") },
+                            placeholder = { Text("AIzaSy...") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            singleLine = true
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (tempApiKey.isNotBlank()) {
+                                coroutineScope.launch {
+                                    appContainer.userPreferencesManager.setCustomGeminiApiKey(tempApiKey)
+                                    showApiKeyDialog = false
+                                    Toast.makeText(context, "Gemini AI Activated!", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Save & Activate")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showApiKeyDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }

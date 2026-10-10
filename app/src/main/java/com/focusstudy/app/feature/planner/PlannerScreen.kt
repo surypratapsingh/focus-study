@@ -28,6 +28,8 @@ import com.focusstudy.app.core.design.theme.StatusPill
 import com.focusstudy.app.core.design.theme.SuccessGreen
 import com.focusstudy.app.core.design.theme.WarningAmber
 import com.focusstudy.app.core.di.AppContainer
+import kotlinx.coroutines.launch
+
 
 @Composable
 fun PlannerScreen(
@@ -45,11 +47,14 @@ fun PlannerScreen(
         )
     }
     val state by viewModel.uiState.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
+    var showRestartDialog by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableIntStateOf(0) }
     var wideRightTab by remember { mutableIntStateOf(0) }
     val phoneTabs = listOf("Today", "Week", "Exam Roadmap")
     val wideRightTabs = listOf("Day Schedule", "Week Overview")
     val context = LocalContext.current
+
 
     val exportCalendarAction: () -> Unit = {
         val sessionsToExport = if (state.allSessions.isNotEmpty()) state.allSessions else state.daySessions
@@ -74,6 +79,37 @@ fun PlannerScreen(
         )
     }
 
+    // Restart Setup Dialog
+    if (showRestartDialog) {
+        AlertDialog(
+            onDismissRequest = { showRestartDialog = false },
+            icon = { Icon(Icons.Default.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Restart Setup Wizard") },
+            text = {
+                Text(
+                    "Restarting setup allows you to re-enter your exam title, exam date, and re-import or edit your syllabus topics cleanly. Your previous focus timer history will be preserved."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showRestartDialog = false
+                        coroutineScope.launch {
+                            appContainer.userPreferencesManager.setOnboardingCompleted(false)
+                        }
+                    }
+                ) {
+                    Text("Re-run Setup")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestartDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     if (isWideScreen) {
         // Two-pane responsive layout for tablets, foldables, and landscape mode
         Row(
@@ -95,22 +131,40 @@ fun PlannerScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = state.exam?.title ?: "Master Exam Plan",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Target Date: ${state.selectedDate} (${state.daysUntilExam} days to exam)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                            )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = state.exam?.title ?: "Master Exam Plan",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Target Date: ${state.selectedDate} (${state.daysUntilExam} days to exam)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                )
+                            }
+                            OutlinedButton(
+                                onClick = { showRestartDialog = true },
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
+                            ) {
+                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Update", style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
                 }
+
 
                 if (state.missedSessions.isNotEmpty() || state.scheduleRisk?.riskLevel == RiskLevel.HIGH || state.scheduleRisk?.riskLevel == RiskLevel.CRITICAL) {
                     item { ReplanAlertBanner(state, onReplan = { viewModel.openReplanProposal() }) }
@@ -244,26 +298,46 @@ fun PlannerScreen(
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                                 shape = RoundedCornerShape(14.dp)
                             ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(
-                                        text = state.exam?.title ?: "Master Exam Plan",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = "Scheduled for: ${state.selectedDate} (${state.daysUntilExam} days to exam)",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                                    )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = state.exam?.title ?: "Master Exam Plan",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "Scheduled for: ${state.selectedDate} (${state.daysUntilExam} days to exam)",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                        )
+                                    }
+                                    OutlinedButton(
+                                        onClick = { showRestartDialog = true },
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    ) {
+                                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Update", style = MaterialTheme.typography.labelSmall)
+                                    }
                                 }
                             }
                         }
 
-                        if (state.daySessions.isEmpty()) {
+                        if (state.topicsMap.isEmpty()) {
+                            item { EmptySyllabusCard(onRestart = { showRestartDialog = true }) }
+                        } else if (state.daySessions.isEmpty()) {
                             item { EmptyDayScheduleCard(onGenerate = { viewModel.regeneratePlan() }) }
                         } else {
+
                             items(state.daySessions, key = { it.id }) { session ->
                                 val topic = state.topicsMap[session.topicId]
                                 val topicName = topic?.name ?: "Topic #${session.topicId.take(4)}"
@@ -414,7 +488,51 @@ private fun AiStrategyInsightCard(explanation: String) {
 }
 
 @Composable
+private fun EmptySyllabusCard(onRestart: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                Icons.Default.MenuBook,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(36.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "No Syllabus Topics Found",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "To generate a timetable, your exam needs topics. Re-run setup to upload your syllabus PDF, paste your topics, or choose the demo template.",
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+            Button(
+                onClick = onRestart,
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Re-run Setup Wizard")
+            }
+        }
+    }
+}
+
+@Composable
 private fun EmptyDayScheduleCard(onGenerate: () -> Unit) {
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp)

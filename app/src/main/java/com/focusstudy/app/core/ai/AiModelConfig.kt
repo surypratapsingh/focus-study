@@ -11,6 +11,9 @@ object AiModelConfig {
     const val PROMPT_VERSION_INSIGHTS = "insights.v1"
     const val PROMPT_VERSION_COACH = "coach.v1"
 
+    // Default embedded API key for out-of-the-box Gemini 1.5 Flash features
+    var DEFAULT_GEMINI_API_KEY: String = com.focusstudy.app.BuildConfig.DEFAULT_GEMINI_API_KEY
+
     // Feature toggles
     var isMockAiModeEnabled: Boolean = false
 }

@@ -52,6 +52,8 @@ fun SettingsScreen(
         mutableStateOf(state.preferences?.customGeminiApiKey ?: "")
     }
     var isApiKeyVisible by remember { mutableStateOf(false) }
+    var showRestartConfirmDialog by remember { mutableStateOf(false) }
+
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -666,6 +668,47 @@ fun SettingsScreen(
                 }
             }
 
+            // 3b. Exam & Syllabus Setup
+            item {
+                Text(
+                    text = "EXAM & SYLLABUS SETUP",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Reset Setup & Update Syllabus",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Need to start a new exam plan, re-import your syllabus PDF, or edit your subjects cleanly? Re-running setup will launch the setup wizard.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Button(
+                            onClick = { showRestartConfirmDialog = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Re-run Setup Wizard")
+                        }
+                    }
+                }
+            }
+
             // 4. Data Backup & Recovery (FSTUDY-015)
             item {
                 Text(
@@ -851,7 +894,47 @@ fun SettingsScreen(
         )
     }
 
+    if (showRestartConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showRestartConfirmDialog = false },
+            icon = { Icon(Icons.Default.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Restart Setup Wizard") },
+            text = {
+                Text(
+                    "You can re-enter your exam name, date, and re-import or type your syllabus. Choose how you would like to proceed:"
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showRestartConfirmDialog = false
+                        viewModel.restartSetup(clearDatabase = false)
+                    }
+                ) {
+                    Text("Re-run Setup")
+                }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = {
+                            showRestartConfirmDialog = false
+                            viewModel.restartSetup(clearDatabase = true)
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Reset All Data")
+                    }
+                    TextButton(onClick = { showRestartConfirmDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            }
+        )
+    }
+
     if (showTutorialDialog) {
         AppTutorialDialog(onDismiss = { showTutorialDialog = false })
     }
 }
+

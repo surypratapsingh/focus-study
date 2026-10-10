@@ -51,6 +51,7 @@ class AiSyllabusParser(
 
         val apiKey = overrideApiKey?.takeIf { it.isNotBlank() }
             ?: preferencesManager?.userPreferencesFlow?.firstOrNull()?.customGeminiApiKey?.takeIf { it.isNotBlank() }
+            ?: AiModelConfig.DEFAULT_GEMINI_API_KEY.takeIf { it.isNotBlank() }
 
         val cleanMime = mimeType.lowercase()
 
