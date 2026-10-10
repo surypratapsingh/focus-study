@@ -219,4 +219,89 @@ class AiCoachAndNotificationTest {
         assertTrue(response.suggestedAction!!.payloadJson.contains("Algorithms"))
         assertTrue(response.suggestedAction!!.payloadJson.contains("90"))
     }
+
+    @Test
+    fun aiCoachService_answersGreetingWarmly() {
+        val coachService = AiCoachService()
+        val context = AiCoachContext(
+            examTitle = "Finals",
+            daysUntilExam = 20,
+            todayTargetMinutes = 180,
+            todayCompletedMinutes = 0,
+            nextTopicName = "Calculus",
+            atRiskTopics = emptyList(),
+            streakDays = 0,
+            coveragePercent = 0f,
+            peakWindow = "Morning"
+        )
+
+        val response = coachService.answerPrompt("hello", context)
+        assertTrue(response.replyText.contains("100% offline"))
+        assertTrue(response.replyText.contains("AI Study Coach"))
+    }
+
+    @Test
+    fun aiCoachService_answers30DayPlanWithAction() {
+        val coachService = AiCoachService()
+        val context = AiCoachContext(
+            examTitle = "MCAT Exam",
+            daysUntilExam = 30,
+            todayTargetMinutes = 240,
+            todayCompletedMinutes = 0,
+            nextTopicName = "Biochemistry",
+            atRiskTopics = emptyList(),
+            streakDays = 2,
+            coveragePercent = 20f,
+            peakWindow = "Morning"
+        )
+
+        val response = coachService.answerPrompt("give me a 30 day plan", context)
+        assertTrue(response.replyText.contains("High-Yield Master Roadmap"))
+        assertNotNull(response.suggestedAction)
+        assertEquals("REBUILD_SCHEDULE", response.suggestedAction?.actionType)
+    }
+
+    @Test
+    fun aiCoachService_answersStressAndOverwhelmWithReset() {
+        val coachService = AiCoachService()
+        val context = AiCoachContext(
+            examTitle = "Boards",
+            daysUntilExam = 10,
+            todayTargetMinutes = 180,
+            todayCompletedMinutes = 60,
+            nextTopicName = "Physics",
+            atRiskTopics = emptyList(),
+            streakDays = 5,
+            coveragePercent = 70f,
+            peakWindow = "Evening"
+        )
+
+        val response = coachService.answerPrompt("I'm feeling really stressed and overwhelmed", context)
+        assertTrue(response.replyText.contains("Take a slow, deep breath"))
+        assertTrue(response.replyText.contains("5-Minute Rule"))
+        assertNotNull(response.suggestedAction)
+        assertEquals("LIGHTEN_TODAY", response.suggestedAction?.actionType)
+    }
+
+    @Test
+    fun aiCoachService_answersMathAndCodingGuides() {
+        val coachService = AiCoachService()
+        val context = AiCoachContext(
+            examTitle = "Engineering Exams",
+            daysUntilExam = 25,
+            todayTargetMinutes = 200,
+            todayCompletedMinutes = 30,
+            nextTopicName = "Algorithms",
+            atRiskTopics = emptyList(),
+            streakDays = 4,
+            coveragePercent = 45f,
+            peakWindow = "Morning"
+        )
+
+        val mathResponse = coachService.answerPrompt("how to study math formulas", context)
+        assertTrue(mathResponse.replyText.contains("Formula Sheet"))
+
+        val codingResponse = coachService.answerPrompt("how to practice coding dsa", context)
+        assertTrue(codingResponse.replyText.contains("Trace Before Typing"))
+    }
 }

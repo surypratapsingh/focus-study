@@ -43,9 +43,14 @@ class AiCoachViewModel(
     private fun loadContextAndGreeting() {
         viewModelScope.launch {
             val ctx = coachService.buildContext()
+            val greetingText = if (ctx.coveragePercent > 0f) {
+                "Welcome back! You are currently ${ctx.coveragePercent.toInt()}% through your syllabus with ${ctx.daysUntilExam} days until ${ctx.examTitle}. How can I help fine-tune your preparation today?"
+            } else {
+                "Welcome to your AI Study Coach! You have ${ctx.daysUntilExam} days until ${ctx.examTitle}. I run 100% offline on your device with complete privacy. Ask me to arrange a schedule, recommend techniques, or log your study sessions."
+            }
             val initialMessage = ChatMessageUi(
                 sender = "coach",
-                text = "Welcome to your Focus Study Coach! You are currently ${ctx.coveragePercent.toInt()}% through your syllabus with ${ctx.daysUntilExam} days until ${ctx.examTitle}. How can I help fine-tune your preparation today?",
+                text = greetingText,
                 supportingData = "Today's Target: ${ctx.todayCompletedMinutes}m / ${ctx.todayTargetMinutes}m · Peak Window: ${ctx.peakWindow}"
             )
 

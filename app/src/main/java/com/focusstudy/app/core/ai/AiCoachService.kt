@@ -324,8 +324,132 @@ class AiCoachService(
             )
         }
 
-        // 4. Standard coaching prompts
+        // 4. Standard and specialized coaching prompts
         return when {
+            // Greetings & AI identity
+            trimmed.matches(Regex("""(?i)^(hi|hello|hey|yo|greetings|hola|namaste|sup|who are you|what can you do).*""")) -> {
+                CoachResponse(
+                    replyText = "Hello! I am your 100% offline AI Study Coach. I run locally on your phone with zero server bills and complete privacy. I can:\n" +
+                            "• 📅 Arrange an exam-ready daily study schedule\n" +
+                            "• ⏱️ Log your study sessions (e.g., 'coding 11:30 to 2:00' or 'math 45 mins')\n" +
+                            "• 🧠 Guide you with evidence-based techniques (Active Recall, Feynman, Pomodoro)\n" +
+                            "• ☕ Monitor your cognitive fatigue and optimal focus windows\n\n" +
+                            "What subject or goal are we focusing on today?",
+                    supportingData = "${context.daysUntilExam} days until ${context.examTitle} · Target: ${context.todayTargetMinutes}m",
+                    suggestedAction = null
+                )
+            }
+
+            // 30-day, 15-day, or general timetable strategy
+            trimmed.contains("30 day plan", ignoreCase = true) || trimmed.contains("30-day", ignoreCase = true) ||
+            trimmed.contains("15 day", ignoreCase = true) || trimmed.contains("how to start", ignoreCase = true) ||
+            trimmed.contains("study plan", ignoreCase = true) || trimmed.contains("roadmap", ignoreCase = true) -> {
+                val bufferDays = (context.daysUntilExam * 0.15).toInt().coerceAtLeast(2)
+                CoachResponse(
+                    replyText = "Here is your recommended High-Yield Master Roadmap for ${context.examTitle}:\n\n" +
+                            "1. Phase 1 (Foundation - First 50%): Deep conceptual study of high-weightage core units. Aim for ${context.todayTargetMinutes}m daily.\n" +
+                            "2. Phase 2 (Practice & Retrieval - Next 30%): Transition to past papers, problem sets, and Active Recall sprints.\n" +
+                            "3. Phase 3 (Consolidation - Final 20%): Reserved $bufferDays-day buffer for full timed mock exams and rapid formula review.\n\n" +
+                            "Tap below to auto-generate and slot these sessions across your calendar.",
+                    supportingData = "Recommended: ~${context.todayTargetMinutes / 60}h daily with $bufferDays buffer days",
+                    suggestedAction = CoachAction(
+                        actionType = "REBUILD_SCHEDULE",
+                        title = "Generate Structured Study Roadmap",
+                        description = "Schedules all units into foundation, practice, and revision phases."
+                    )
+                )
+            }
+
+            // Subject Guide: Math / Numerical
+            trimmed.contains("math", ignoreCase = true) || trimmed.contains("calculus", ignoreCase = true) ||
+            trimmed.contains("algebra", ignoreCase = true) || trimmed.contains("formula", ignoreCase = true) ||
+            trimmed.contains("numerical", ignoreCase = true) -> {
+                CoachResponse(
+                    replyText = "Math is a performance skill, not a reading subject! Three rules for rapid mastery:\n\n" +
+                            "1. Never read math passively: Derive core formulas from first principles once so you understand their intuition.\n" +
+                            "2. Build a 1-page Formula Sheet: Write down every identity with edge cases.\n" +
+                            "3. Practice 5 mixed problems daily: Solving without looking at answers trains your test-day neural pathways.",
+                    supportingData = "Pedagogical Tip: Active Problem Solving > Passive Re-reading",
+                    suggestedAction = null
+                )
+            }
+
+            // Subject Guide: Physics / Chemistry / Science
+            trimmed.contains("physics", ignoreCase = true) || trimmed.contains("chemistry", ignoreCase = true) ||
+            trimmed.contains("science", ignoreCase = true) || trimmed.contains("biology", ignoreCase = true) -> {
+                CoachResponse(
+                    replyText = "For sciences, conceptual models and mental visual representations drive high exam scores:\n\n" +
+                            "1. Visual Free-Body & Reaction Diagrams: Draw physical systems or organic mechanisms from memory before touching formulas.\n" +
+                            "2. Dimensional Analysis: Check units on every equation to catch calculation mistakes immediately.\n" +
+                            "3. Feynman Principle: Explain the underlying physical law out loud in plain words as if teaching a 12-year-old.",
+                    supportingData = "Recommended Method: Diagrammatic Blurting & Unit Checking",
+                    suggestedAction = null
+                )
+            }
+
+            // Subject Guide: Coding / Computer Science / Engineering
+            trimmed.contains("coding", ignoreCase = true) || trimmed.contains("programming", ignoreCase = true) ||
+            trimmed.contains("dsa", ignoreCase = true) || trimmed.contains("algorithm", ignoreCase = true) ||
+            trimmed.contains("software", ignoreCase = true) -> {
+                CoachResponse(
+                    replyText = "For Computer Science and Coding:\n\n" +
+                            "1. Trace Before Typing: Walk through edge cases and pointer operations with pen and paper before coding.\n" +
+                            "2. Pattern Recognition: Categorize problems by patterns (Sliding Window, Two Pointers, DFS/BFS, Dynamic Programming) rather than memorizing individual solutions.\n" +
+                            "3. Space-Time Complexity: Always state Big-O runtime and auxiliary space for every solution you write.",
+                    supportingData = "Key Rule: Trace by hand → Implement → Analyze Big-O",
+                    suggestedAction = null
+                )
+            }
+
+            // Subject Guide: Humanities / Law / History / UPSC
+            trimmed.contains("history", ignoreCase = true) || trimmed.contains("law", ignoreCase = true) ||
+            trimmed.contains("upsc", ignoreCase = true) || trimmed.contains("literature", ignoreCase = true) ||
+            trimmed.contains("essay", ignoreCase = true) -> {
+                CoachResponse(
+                    replyText = "For theoretical and humanities subjects:\n\n" +
+                            "1. Chronological Mind Maps: Connect events and legal precedents by causal relationship (Cause → Trigger → Direct Consequence).\n" +
+                            "2. Thematic Anchor Points: For every case law or topic, memorize 3 strong keywords and 1 counter-argument.\n" +
+                            "3. Timed Outline Drills: Practice writing structured 15-minute essay outlines to build speed.",
+                    supportingData = "Framework: Chronology · Thematic Mind Maps · Rapid Outlines",
+                    suggestedAction = null
+                )
+            }
+
+            // Stress, Overwhelm & Anxiety
+            trimmed.contains("stressed", ignoreCase = true) || trimmed.contains("anxious", ignoreCase = true) ||
+            trimmed.contains("anxiety", ignoreCase = true) || trimmed.contains("overwhelm", ignoreCase = true) ||
+            trimmed.contains("scared", ignoreCase = true) || trimmed.contains("panic", ignoreCase = true) -> {
+                CoachResponse(
+                    replyText = "Take a slow, deep breath. Exam anxiety is completely natural, but panic impairs working memory.\n\n" +
+                            "Here is your reset protocol:\n" +
+                            "1. The 5-Minute Rule: Don't worry about the whole syllabus. Just commit to sitting down for 5 minutes with our Focus Timer.\n" +
+                            "2. Brain Dump: Jot down everything worrying you on a piece of scratch paper to clear mental RAM.\n" +
+                            "3. One Brick at a Time: Focus only on the single topic in front of you right now. You have plenty of time to execute.",
+                    supportingData = "Mental Reset: 5-Minute Rule · Box Breathing · Focus Timer",
+                    suggestedAction = CoachAction(
+                        actionType = "LIGHTEN_TODAY",
+                        title = "Lighten Today's Target",
+                        description = "Shift 1 session to tomorrow so you can rest and recharge."
+                    )
+                )
+            }
+
+            // Procrastination & Motivation
+            trimmed.contains("procrastinat", ignoreCase = true) || trimmed.contains("can't focus", ignoreCase = true) ||
+            trimmed.contains("distracted", ignoreCase = true) || trimmed.contains("unmotivated", ignoreCase = true) ||
+            trimmed.contains("no motivation", ignoreCase = true) || trimmed.contains("lazy", ignoreCase = true) -> {
+                CoachResponse(
+                    replyText = "Motivation usually follows action, not the other way around!\n\n" +
+                            "Try this proven friction-reducing technique:\n" +
+                            "1. Turn on Deep Brown Noise in our Focus Timer to mask ambient sound.\n" +
+                            "2. Start a mini 15-minute sprint on your easiest topic.\n" +
+                            "3. Once the momentum starts, dopamine naturally kicks in and studying feels effortless.",
+                    supportingData = "Focus Hack: Lower the friction barrier with a 15-minute sprint",
+                    suggestedAction = null
+                )
+            }
+
+            // Specific Deficit Diagnosis
             trimmed.contains("Why am I behind", ignoreCase = true) -> {
                 val riskList = if (context.atRiskTopics.isNotEmpty()) context.atRiskTopics.joinToString(", ") else "Core fundamentals"
                 CoachResponse(
@@ -339,8 +463,38 @@ class AiCoachService(
                 )
             }
 
+            // Backlogs & Catching Up
+            trimmed.contains("backlog", ignoreCase = true) || trimmed.contains("behind", ignoreCase = true) ||
+            trimmed.contains("catch up", ignoreCase = true) || trimmed.contains("too much syllabus", ignoreCase = true) -> {
+                val riskList = if (context.atRiskTopics.isNotEmpty()) context.atRiskTopics.joinToString(", ") else "high-weightage chapters"
+                CoachResponse(
+                    replyText = "Don't try to cram everything at once. Use the Pareto Principle (80/20 Rule):\n\n" +
+                            "80% of exam marks come from 20% of core topics ($riskList). By focusing strictly on high-yield units and skimming the rest, you will recover your syllabus deficit without burnout.",
+                    supportingData = "Paced Target: ${context.todayTargetMinutes}m · Coverage: ${context.coveragePercent.toInt()}%",
+                    suggestedAction = CoachAction(
+                        actionType = "REBUILD_SCHEDULE",
+                        title = "Prioritize High-Yield Backlogs",
+                        description = "Rebalance upcoming days to focus on core syllabus units."
+                    )
+                )
+            }
+
+            // Exam Day & Last-Minute Advice
+            trimmed.contains("exam day", ignoreCase = true) || trimmed.contains("tomorrow is exam", ignoreCase = true) ||
+            trimmed.contains("day before", ignoreCase = true) || trimmed.contains("last minute", ignoreCase = true) ||
+            trimmed.contains("night before", ignoreCase = true) -> {
+                CoachResponse(
+                    replyText = "For the final 24 hours before your exam:\n\n" +
+                            "1. Sleep is non-negotiable: Memory consolidation happens during REM sleep. Sleeping 7-8 hours yields more points than all-night cramming.\n" +
+                            "2. Active Formula Review: Only review high-level summary sheets and error logs. Do not start new heavy topics.\n" +
+                            "3. Pack your materials: Hall ticket, pens, calculator, water bottle ready tonight to prevent morning stress.",
+                    supportingData = "Priority: 7-8h Sleep · High-Yield Formula Review · Calm Mind",
+                    suggestedAction = null
+                )
+            }
+
             trimmed.contains("What should I study", ignoreCase = true) -> {
-                val topic = context.nextTopicName ?: context.atRiskTopics.firstOrNull() ?: "Syllabus Review"
+                val topic = context.nextTopicName ?: context.atRiskTopics.firstOrNull() ?: "Core Syllabus Fundamentals"
                 CoachResponse(
                     replyText = "Your top priority today is '$topic'. To maximize retention, schedule this during your peak window (${context.peakWindow}).",
                     supportingData = "Paced target: ${context.todayTargetMinutes} minutes today",
@@ -366,7 +520,7 @@ class AiCoachService(
                 val bufferDays = PlannerEngine.reserveBufferDays(context.daysUntilExam)
                 val statusText = if (context.coveragePercent > 50f) "well on track" else "tight on pace"
                 CoachResponse(
-                    replyText = "Yes, you are $statusText. With ${context.daysUntilExam} days remaining and a $bufferDays-day final buffer, maintaining ~${context.todayTargetMinutes} minutes daily will comfortably finish all units before review week.",
+                    replyText = "Yes, you are $statusText! With ${context.daysUntilExam} days remaining and a $bufferDays-day final buffer, maintaining ~${context.todayTargetMinutes} minutes daily will comfortably finish all units before review week.",
                     supportingData = "Progress: ${context.coveragePercent.toInt()}% syllabus mastered · Days left: ${context.daysUntilExam}",
                     suggestedAction = null
                 )
@@ -418,11 +572,41 @@ class AiCoachService(
                 )
             }
 
-            trimmed.contains("technique", ignoreCase = true) || trimmed.contains("how should I study", ignoreCase = true) || trimmed.contains("study method", ignoreCase = true) -> {
+            trimmed.contains("technique", ignoreCase = true) || trimmed.contains("how should I study", ignoreCase = true) ||
+            trimmed.contains("study method", ignoreCase = true) || trimmed.contains("how to learn", ignoreCase = true) -> {
                 val nextTopic = context.nextTopicName ?: "core topics"
                 CoachResponse(
-                    replyText = "For '$nextTopic', I recommend Active Recall & Testing (close notes and retrieve answers from memory) combined with 25-minute Pomodoro sprints. For complex conceptual chapters, try the Feynman Technique: explain the topic in plain language to reveal gaps.",
+                    replyText = "For '$nextTopic', I recommend Active Recall & Self-Testing combined with 25-minute Pomodoro sprints:\n\n" +
+                            "• Active Recall: Close your book, test yourself on key definitions without peeking.\n" +
+                            "• Feynman Technique: Explain the concept simply in your own words to uncover blind spots.\n" +
+                            "• Spaced Repetition: Review this topic again in 24 hours, then 3 days later.",
                     supportingData = "Recommended Methods: Active Recall · Feynman Technique · Pomodoro",
+                    suggestedAction = null
+                )
+            }
+
+            trimmed.contains("quiz", ignoreCase = true) || trimmed.contains("flashcard", ignoreCase = true) ||
+            trimmed.contains("active recall", ignoreCase = true) || trimmed.contains("test memory", ignoreCase = true) ||
+            trimmed.contains("feynman", ignoreCase = true) || trimmed.contains("blurting", ignoreCase = true) -> {
+                val topic = context.nextTopicName ?: context.atRiskTopics.firstOrNull() ?: "Core Syllabus Concepts"
+                CoachResponse(
+                    replyText = "Active recall is the most effective evidence-based learning technique! I've loaded a 5-card retrieval sprint for '$topic' with spaced repetition scoring. Tap below to launch your sprint.",
+                    supportingData = "Recommended Topic: $topic · 5 Recall Cards · Up to +150 Scholar XP",
+                    suggestedAction = CoachAction(
+                        actionType = "TEST_ACTIVE_RECALL",
+                        title = "Launch Recall Sprint for '$topic'",
+                        description = "Start interactive 5-question flashcard test on '$topic'.",
+                        payloadJson = """{"topicName":"$topic"}"""
+                    )
+                )
+            }
+
+            trimmed.contains("white noise", ignoreCase = true) || trimmed.contains("soundscape", ignoreCase = true) ||
+            trimmed.contains("focus sound", ignoreCase = true) || trimmed.contains("alpha wave", ignoreCase = true) ||
+            trimmed.contains("pomodoro", ignoreCase = true) -> {
+                CoachResponse(
+                    replyText = "Focus Study includes built-in real-time synthesized ambient soundscapes (White Noise, Brown Noise, and 10Hz Binaural Alpha Waves) directly inside the Focus Timer. It requires zero downloads or internet and generates ambient audio via native AudioTrack to keep your deep work distraction-free.",
+                    supportingData = "Available: White Noise · Deep Brown Noise · 10Hz Alpha Binaural Beats",
                     suggestedAction = null
                 )
             }
@@ -435,32 +619,12 @@ class AiCoachService(
                 )
             }
 
-            trimmed.contains("quiz", ignoreCase = true) || trimmed.contains("flashcard", ignoreCase = true) || trimmed.contains("active recall", ignoreCase = true) || trimmed.contains("test memory", ignoreCase = true) -> {
-                val topic = context.nextTopicName ?: context.atRiskTopics.firstOrNull() ?: "Core Syllabus Concepts"
-                CoachResponse(
-                    replyText = "Active recall is the most effective evidence-based learning technique! I've loaded a 5-card retrieval sprint for '$topic' with spaced repetition scoring. Tap the brain icon on any session card or start your recall sprint now.",
-                    supportingData = "Recommended Topic: $topic · 5 Recall Cards · Up to +150 Scholar XP",
-                    suggestedAction = CoachAction(
-                        actionType = "TEST_ACTIVE_RECALL",
-                        title = "Launch Recall Sprint for '$topic'",
-                        description = "Start interactive 5-question flashcard test on '$topic'.",
-                        payloadJson = """{"topicName":"$topic"}"""
-                    )
-                )
-            }
-
-            trimmed.contains("white noise", ignoreCase = true) || trimmed.contains("soundscape", ignoreCase = true) || trimmed.contains("focus sound", ignoreCase = true) || trimmed.contains("alpha wave", ignoreCase = true) -> {
-                CoachResponse(
-                    replyText = "Focus Study includes built-in real-time synthesized ambient soundscapes (White Noise, Brown Noise, and 10Hz Binaural Alpha Waves) directly inside the Focus Timer. It requires zero downloads or internet and generates ambient audio via native AudioTrack to keep your deep work distraction-free.",
-                    supportingData = "Available: White Noise · Deep Brown Noise · 10Hz Alpha Binaural Beats",
-                    suggestedAction = null
-                )
-            }
-
             else -> {
+                val nextUp = context.nextTopicName ?: "your core syllabus units"
                 CoachResponse(
-                    replyText = "Keep going strong! You've achieved a ${context.streakDays}-day streak with ${context.coveragePercent.toInt()}% coverage. Focusing on today's ${context.todayTargetMinutes}m target during ${context.peakWindow} will keep you ahead of your deadline.",
-                    supportingData = "${context.daysUntilExam} days until ${context.examTitle}",
+                    replyText = "To prepare effectively for ${context.examTitle}, focus on today's target (${context.todayTargetMinutes} minutes) during your peak window (${context.peakWindow}).\n\n" +
+                            "Next priority session: '$nextUp'. Ask me for subject-specific advice, or tell me 'studied $nextUp 45 mins' to log your progress!",
+                    supportingData = "${context.daysUntilExam} days until ${context.examTitle} · Streak: ${context.streakDays}d",
                     suggestedAction = null
                 )
             }

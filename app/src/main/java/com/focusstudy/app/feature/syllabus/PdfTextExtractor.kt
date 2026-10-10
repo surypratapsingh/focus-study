@@ -42,10 +42,10 @@ object PdfTextExtractor {
             val streamEnd = indexOf(bytes, ENDSTREAM_MARKER, dataStart)
             if (streamEnd == -1) break
 
-            // Inspect preceding dictionary for /FlateDecode compression
-            val dictHeaderLen = minOf(streamStart, 512)
+            // Inspect preceding dictionary for /FlateDecode or /Fl compression
+            val dictHeaderLen = minOf(streamStart, 1024)
             val dictSlice = String(bytes.copyOfRange(maxOf(0, streamStart - dictHeaderLen), streamStart), Charsets.US_ASCII)
-            val isFlate = dictSlice.contains("/FlateDecode")
+            val isFlate = dictSlice.contains("/FlateDecode") || dictSlice.contains("/Fl")
 
             val streamBytes = bytes.copyOfRange(dataStart, streamEnd)
             val rawContent = if (isFlate) {
@@ -139,45 +139,75 @@ object PdfTextExtractor {
     }
 
     /**
-     * Extracts strings from Tj, TJ, ', and " operators
+     * Extracts strings from Tj, TJ, ', and " operators across both single and multi-line syntax.
      */
     private fun extractStringsFromTextOperators(content: String): String {
         val result = StringBuilder()
-        val lines = content.split('\r', '\n')
 
+        // 1. First, process multi-line and single-line TJ arrays: [ ... ] TJ
+        val tjArrayRegex = Regex("""\[(.*?)\]\s*TJ""", RegexOption.DOT_MATCHES_ALL)
+        var lastEnd = 0
+        val textSegments = mutableListOf<String>()
+
+        for (match in tjArrayRegex.findAll(content)) {
+            val arrayContent = match.groupValues[1]
+            val decodedArray = parseArrayContent(arrayContent)
+            if (decodedArray.isNotBlank()) {
+                textSegments.add(decodedArray)
+            }
+        }
+
+        // 2. Process line-by-line for standard Tj, ', ", and line break operators
+        val lines = content.split('\r', '\n')
         for (line in lines) {
             val trimmed = line.trim()
             if (trimmed.isEmpty()) continue
 
-            // 1. Match Tj: (Text) Tj
+            // Tj: (Text) Tj
             val tjRegex = Regex("""\((.*?)\)\s*Tj""")
             for (m in tjRegex.findAll(trimmed)) {
                 result.append(unescapePdfString(m.groupValues[1])).append(" ")
             }
 
-            // 2. Match TJ array: [(Text1) -120 (Text2)] TJ
-            val tjArrayRegex = Regex("""\[(.*?)\]\s*TJ""")
-            for (m in tjArrayRegex.findAll(trimmed)) {
-                val arrayContent = m.groupValues[1]
-                val itemRegex = Regex("""\((.*?)\)""")
-                val parts = itemRegex.findAll(arrayContent).map { unescapePdfString(it.groupValues[1]) }
-                result.append(parts.joinToString("")).append(" ")
-            }
-
-            // 3. Hex string: <48656C6C6F> Tj
+            // Hex Tj: <48656C6C6F> Tj
             val hexRegex = Regex("""<([0-9a-fA-F]+)>\s*Tj""")
             for (m in hexRegex.findAll(trimmed)) {
                 result.append(decodeHexString(m.groupValues[1])).append(" ")
             }
 
-            // 4. Line terminators in PDF: T*, TD, Td, ', "
-            if (trimmed.endsWith("T*") || trimmed.endsWith("'") || trimmed.endsWith("\"") ||
-                trimmed.endsWith("TD") || trimmed.endsWith("Td")) {
+            // ' operator: (Text) ' (move to next line and show text)
+            val quoteRegex = Regex("""\((.*?)\)\s*'""")
+            for (m in quoteRegex.findAll(trimmed)) {
+                result.append(unescapePdfString(m.groupValues[1])).append("\n")
+            }
+
+            // Line terminators in PDF: T*, TD, Td
+            if (trimmed.endsWith("T*") || trimmed.endsWith("TD") || trimmed.endsWith("Td")) {
                 result.append("\n")
             }
         }
 
-        return result.toString()
+        val combined = (textSegments.joinToString("\n") + "\n" + result.toString()).trim()
+        return combined
+    }
+
+    /**
+     * Parses the inner elements of a TJ array: parenthesized strings `(...)` and hex strings `<...>`
+     */
+    private fun parseArrayContent(arrayContent: String): String {
+        val sb = StringBuilder()
+        // Extract both (literal string) and <hex string>
+        val tokenRegex = Regex("""\((.*?)\)|<([0-9a-fA-F]+)>""")
+        for (m in tokenRegex.findAll(arrayContent)) {
+            val literalGroup = m.groups[1]?.value
+            val hexGroup = m.groups[2]?.value
+            if (literalGroup != null) {
+                sb.append(unescapePdfString(literalGroup))
+            } else if (hexGroup != null) {
+                sb.append(decodeHexString(hexGroup))
+            }
+        }
+        return sb.toString().trim()
     }
 
     /**
@@ -233,12 +263,40 @@ object PdfTextExtractor {
         return sb.toString()
     }
 
-    private fun decodeHexString(hex: String): String {
+    /**
+     * Decodes hex strings with support for both ASCII and UTF-16BE (Word / Adobe export)
+     */
+    fun decodeHexString(hex: String): String {
+        val cleanHex = hex.trim()
+        if (cleanHex.isEmpty()) return ""
+
+        // Check for UTF-16BE Byte Order Mark (FEFF)
+        val isUtf16Bom = cleanHex.startsWith("feff", ignoreCase = true)
+        val isLikelyUtf16 = isUtf16Bom || (cleanHex.length >= 8 && cleanHex.length % 4 == 0 &&
+                cleanHex.substring(0, 2) == "00" && cleanHex.substring(4, 6) == "00")
+
+        if (isLikelyUtf16) {
+            val startIdx = if (isUtf16Bom) 4 else 0
+            val sb = StringBuilder()
+            var i = startIdx
+            while (i + 3 < cleanHex.length) {
+                val codePoint = cleanHex.substring(i, i + 4).toIntOrNull(16) ?: break
+                if (codePoint > 0) {
+                    sb.append(codePoint.toChar())
+                }
+                i += 4
+            }
+            if (sb.isNotBlank()) return sb.toString()
+        }
+
+        // Standard 1-byte decoding (ASCII / Latin-1)
         val sb = StringBuilder()
         var i = 0
-        while (i + 1 < hex.length) {
-            val byteVal = hex.substring(i, i + 2).toIntOrNull(16) ?: break
-            sb.append(byteVal.toChar())
+        while (i + 1 < cleanHex.length) {
+            val byteVal = cleanHex.substring(i, i + 2).toIntOrNull(16) ?: break
+            if (byteVal in 32..126 || byteVal == 10 || byteVal == 13) {
+                sb.append(byteVal.toChar())
+            }
             i += 2
         }
         return sb.toString()

@@ -62,7 +62,7 @@ class AiSyllabusParser(
 
                 if (sanitizedValidation.isValid && !sanitizedValidation.sanitizedText.isNullOrBlank() && sanitizedValidation.sanitizedText!!.length >= 30) {
                     val safeText = sanitizedValidation.sanitizedText!!
-                    val parsed = SyllabusParser.parseDocument(safeText, "text/plain")
+                    val parsed = SyllabusParser.parseDocument(safeText, "text/plain", examTitle)
                     if (parsed.isNotEmpty()) {
                         return@withContext AiSyllabusParseResult(
                             isValid = true,
@@ -156,7 +156,7 @@ class AiSyllabusParser(
                 }
 
                 val safeText = sanitized.sanitizedText!!
-                val parsed = SyllabusParser.parseDocument(safeText, cleanMime)
+                val parsed = SyllabusParser.parseDocument(safeText, cleanMime, examTitle)
                 if (parsed.isEmpty()) {
                     return@withContext AiSyllabusParseResult(
                         isValid = false,

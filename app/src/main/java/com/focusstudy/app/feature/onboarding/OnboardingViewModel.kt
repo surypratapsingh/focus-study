@@ -21,16 +21,17 @@ import java.util.*
 
 data class OnboardingUiState(
     val currentStep: Int = 1,
-    val examTitle: String = "Semester Finals",
+    val totalSteps: Int = 2,
+    val examTitle: String = "",
     val examType: String = "University Exam",
-    val daysRemaining: Int = 42,
+    val daysRemaining: Int = 30,
     val isTentativeDate: Boolean = false,
     val targetScore: Int = 85,
     val dailyWeekdayHours: Float = 3.0f,
-    val dailyWeekendHours: Float = 5.0f,
+    val dailyWeekendHours: Float = 4.0f,
     val preferredStudyWindow: String = "Morning (07:00 - 10:00)",
-    val sessionDurationMinutes: Int = 45,
-    val breakDurationMinutes: Int = 10,
+    val sessionDurationMinutes: Int = 25,
+    val breakDurationMinutes: Int = 5,
     val studyIntensity: String = "Balanced",
     val syllabusRawText: String = "",
     val parsedTopics: List<ParsedTopicItem> = emptyList(),
@@ -51,17 +52,23 @@ class OnboardingViewModel(
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
     init {
-        // Pre-fill with a rich sample syllabus
+        // Start completely clean. Zero pre-populated personal data.
+        // User data is 100% private and stored only locally on this phone.
+    }
+
+    fun loadSampleTemplate() {
         val sample = SyllabusParser.sampleComputerScienceSyllabus()
-        val parsed = SyllabusParser.parseText(sample)
+        val parsed = SyllabusParser.parseText(sample, "Computer Science Finals")
         _uiState.value = _uiState.value.copy(
+            examTitle = if (_uiState.value.examTitle.isBlank()) "Computer Science Finals" else _uiState.value.examTitle,
             syllabusRawText = sample,
-            parsedTopics = parsed
+            parsedTopics = parsed,
+            importSuccessMessage = "Loaded Demo Computer Science Template (${parsed.size} topics)"
         )
     }
 
     fun nextStep() {
-        if (_uiState.value.currentStep < 6) {
+        if (_uiState.value.currentStep < _uiState.value.totalSteps) {
             _uiState.value = _uiState.value.copy(currentStep = _uiState.value.currentStep + 1)
         }
     }
@@ -206,11 +213,12 @@ class OnboardingViewModel(
             _uiState.value = _uiState.value.copy(isBuildingPlan = true)
 
             val state = _uiState.value
+            val resolvedTitle = state.examTitle.ifBlank { "My Exam" }
             val examDateUtc = System.currentTimeMillis() + (state.daysRemaining.toLong() * 24 * 60 * 60 * 1000L)
 
             // 1. Insert Exam
             val exam = Exam(
-                title = state.examTitle,
+                title = resolvedTitle,
                 examType = state.examType,
                 examDateUtc = examDateUtc,
                 isTentative = state.isTentativeDate,
@@ -218,8 +226,19 @@ class OnboardingViewModel(
             )
             db.examDao().insertExam(exam)
 
-            // 2. Group topics by Subject and Unit
-            val subjectNames = state.parsedTopics.map { it.subjectName }.distinct().ifEmpty { listOf(state.examTitle) }
+            // 2. Resolve topics (use uploaded/parsed topics, or create clean starter milestones)
+            val effectiveTopics = if (state.parsedTopics.isNotEmpty()) {
+                state.parsedTopics
+            } else {
+                listOf(
+                    ParsedTopicItem(name = "Unit 1: Fundamentals & Concepts", unitTitle = "Core Foundation", subjectName = resolvedTitle, difficulty = "easy", importance = "high", estimatedMinutes = 45),
+                    ParsedTopicItem(name = "Unit 2: Problem Solving & Practice", unitTitle = "In-Depth Study", subjectName = resolvedTitle, difficulty = "medium", importance = "critical", estimatedMinutes = 60),
+                    ParsedTopicItem(name = "Unit 3: Revision & Practice Tests", unitTitle = "Final Mastery", subjectName = resolvedTitle, difficulty = "medium", importance = "high", estimatedMinutes = 45)
+                )
+            }
+
+            // Group topics by Subject and Unit
+            val subjectNames = effectiveTopics.map { it.subjectName }.distinct().ifEmpty { listOf(resolvedTitle) }
             val subjects = subjectNames.mapIndexed { index, name ->
                 Subject(
                     id = UUID.randomUUID().toString(),
@@ -240,7 +259,7 @@ class OnboardingViewModel(
             val topicEntities = mutableListOf<Topic>()
 
             for (subject in subjects) {
-                val subjectTopics = state.parsedTopics.filter { it.subjectName == subject.name }
+                val subjectTopics = effectiveTopics.filter { it.subjectName == subject.name }
                 val unitTitles = subjectTopics.map { it.unitTitle }.distinct().ifEmpty { listOf("Core Topics") }
 
                 for ((uIdx, unitTitle) in unitTitles.withIndex()) {

@@ -20,9 +20,18 @@ data class ParsedTopicItem(
 
 object SyllabusParser {
 
+    private val BOILERPLATE_KEYWORDS = listOf(
+        "instructor", "professor", "office hours", "email:", "credits:", "prerequisites",
+        "grading policy", "grading breakdown", "grade scale", "attendance policy",
+        "textbook", "reference book", "recommended reading", "isbn",
+        "academic integrity", "academic honesty", "plagiarism", "canvas", "blackboard",
+        "moodle", "classroom:", "zoom link", "exam date:", "submission guideline"
+    )
+
     /**
      * Parses unstructured or semi-structured syllabus text into hierarchical topics.
-     * Detects "Subject:", "Unit", "Module", "Chapter", bullet points, numbered items.
+     * Detects "Subject:", "Unit", "Module", "Chapter", "Part", roman numerals, bullet points, numbered items.
+     * Automatically filters out course administration boilerplate (grading, office hours, textbooks).
      */
     fun parseText(
         rawText: String,
@@ -32,29 +41,44 @@ object SyllabusParser {
         val topics = mutableListOf<ParsedTopicItem>()
 
         var currentSubject = defaultSubjectName
-        var currentUnit = "General Topics"
+        var currentUnit = "Unit 1: Core Concepts"
+        var unitCounter = 1
+
+        val unitRegex = Regex("""^(?:unit|module|chapter|section|part)\s*(?:[ivxlcdm\d]+|[:\s-])""", RegexOption.IGNORE_CASE)
 
         for (line in lines) {
             val lower = line.lowercase()
 
+            // Skip administrative boilerplate
+            if (BOILERPLATE_KEYWORDS.any { lower.contains(it) }) {
+                continue
+            }
+
             when {
-                lower.startsWith("subject:") || lower.startsWith("course:") -> {
-                    currentSubject = line.substringAfter(":").trim().ifBlank { defaultSubjectName }
-                    currentUnit = "Unit 1: Fundamentals"
+                lower.startsWith("subject:") || lower.startsWith("course:") || lower.startsWith("class:") -> {
+                    val extracted = line.substringAfter(":").trim()
+                    if (extracted.isNotBlank()) {
+                        currentSubject = extracted
+                        currentUnit = "Unit 1: Fundamentals"
+                        unitCounter = 1
+                    }
                 }
-                lower.startsWith("unit") || lower.startsWith("module") || lower.startsWith("chapter") || lower.startsWith("section") -> {
+                unitRegex.containsMatchIn(line) -> {
                     currentUnit = line.trim()
                 }
                 else -> {
-                    // Clean line from bullet points or numbers (e.g. "1. Topic", "- Topic", "* Topic")
+                    // Clean line from bullet points, numbering (e.g. "1.1 Topic", "1. Topic", "• Topic", "* Topic", "(a) Topic")
                     val cleanedName = line
-                        .replaceFirst(Regex("^[-*•\\d+.)\\s]+"), "")
+                        .replaceFirst(Regex("""^[-*•\s]+"""), "")
+                        .replaceFirst(Regex("""^\(?[\d.]+\)?\s*"""), "")
+                        .replaceFirst(Regex("""^\(?[a-zA-Z]\)\s*"""), "")
                         .trim()
 
-                    if (cleanedName.length >= 3) {
-                        val importance = if (lower.contains("core") || lower.contains("advanced") || lower.contains("important")) "high" else "normal"
-                        val difficulty = if (lower.contains("intro") || lower.contains("basic") || lower.contains("overview")) "easy"
-                        else if (lower.contains("advanced") || lower.contains("design") || lower.contains("analysis")) "hard"
+                    // Ensure plausible topic length and meaningful characters
+                    if (cleanedName.length >= 3 && cleanedName.any { it.isLetter() }) {
+                        val importance = if (lower.contains("core") || lower.contains("advanced") || lower.contains("important") || lower.contains("critical")) "high" else "normal"
+                        val difficulty = if (lower.contains("intro") || lower.contains("basic") || lower.contains("overview") || lower.contains("fundamental")) "easy"
+                        else if (lower.contains("advanced") || lower.contains("design") || lower.contains("analysis") || lower.contains("complex")) "hard"
                         else "medium"
 
                         topics.add(
@@ -148,13 +172,13 @@ Hypothesis Testing and p-values
     /**
      * Ingests documents (PDF/images/text) with security validation and sanitization
      */
-    fun parseDocument(content: String, mimeType: String? = null): List<ParsedTopicItem> {
+    fun parseDocument(content: String, mimeType: String? = null, examTitle: String = "General Subject"): List<ParsedTopicItem> {
         val validation = FileImportValidator.sanitizeExtractedText(content)
         val textToParse = validation.sanitizedText ?: content
         return if (textToParse.trim().startsWith("{")) {
             parseStructuredAiResponse(textToParse)
         } else {
-            parseText(textToParse)
+            parseText(textToParse, examTitle)
         }
     }
 }

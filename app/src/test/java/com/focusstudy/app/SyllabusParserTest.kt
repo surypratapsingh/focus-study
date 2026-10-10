@@ -59,4 +59,46 @@ Advanced Graph Theory Analysis
         assertEquals("hard", parsed[1].difficulty)
         assertEquals(90, parsed[1].estimatedMinutes)
     }
+
+    @Test
+    fun parseText_filtersAdministrativeBoilerplate() {
+        val raw = """
+Course: Distributed Systems
+Instructor: Dr. Alan Turing
+Office Hours: Mon/Wed 2:00 PM - 4:00 PM
+Email: alan.turing@university.edu
+Credits: 4
+Grading Policy: 30% Midterms, 40% Final Exam, 30% Homework
+Textbook: Distributed Systems by Tanenbaum
+
+Module 1: Consensus and Replication
+1.1 Paxos and Raft Consensus
+1.2 Byzantine Fault Tolerance
+1.3 Vector Clocks and Causality
+
+Attendance Policy: 80% mandatory attendance
+Academic Integrity: Plagiarism is strictly prohibited
+        """.trimIndent()
+
+        val parsed = SyllabusParser.parseText(raw)
+        assertEquals(3, parsed.size)
+        assertEquals("Paxos and Raft Consensus", parsed[0].name)
+        assertEquals("Byzantine Fault Tolerance", parsed[1].name)
+        assertEquals("Vector Clocks and Causality", parsed[2].name)
+        assertEquals("Distributed Systems", parsed[0].subjectName)
+        assertEquals("Module 1: Consensus and Replication", parsed[0].unitTitle)
+    }
+
+    @Test
+    fun pdfTextExtractor_decodesUtf16BeHexStrings() {
+        // "Hello" in UTF-16BE with BOM FEFF: 0048 0065 006C 006C 006F
+        val hexWithBom = "FEFF00480065006C006C006F"
+        val decodedWithBom = com.focusstudy.app.feature.syllabus.PdfTextExtractor.decodeHexString(hexWithBom)
+        assertEquals("Hello", decodedWithBom)
+
+        // Standard ASCII hex: 48656C6C6F
+        val asciiHex = "48656C6C6F"
+        val decodedAscii = com.focusstudy.app.feature.syllabus.PdfTextExtractor.decodeHexString(asciiHex)
+        assertEquals("Hello", decodedAscii)
+    }
 }

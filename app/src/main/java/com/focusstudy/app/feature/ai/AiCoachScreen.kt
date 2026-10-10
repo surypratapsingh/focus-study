@@ -84,13 +84,14 @@ fun AiCoachScreen(
     }
 
     val quickPrompts = listOf(
-        "Coding from 11:30 to 2:00, enter this in data",
+        "What should I study today?",
+        "Create a 30-day plan",
         "Read my schedule",
-        "What is my chronotype?",
+        "Active recall techniques",
+        "How to study physics/math",
+        "Feeling overwhelmed / behind",
+        "Log: Studied 45 mins",
         "Check my burnout risk",
-        "Recommend study technique",
-        "Arrange a schedule",
-        "Why am I behind?",
         "Make today lighter"
     )
 
