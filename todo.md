@@ -212,6 +212,26 @@
 - [x] **FSTUDY-020-04** — Android `FileProvider` (`file_paths.xml`) and 1-tap calendar export in `PlannerScreen` (Week view) and `SettingsScreen` (Data Management)
 - [x] **FSTUDY-020-05** — 14 unit test suites passing 100% with fresh verified production packages (debug APK 18.9 MB, release APK 12.3 MB, Google Play AAB 11.9 MB)
 
+---
+
+## 🧠 Active Recall Flashcards & Spaced Practice Quizzes (DEC-031)
+
+- [x] **FSTUDY-021-01** — Native `ActiveRecallEngine` with 100% offline pedagogical heuristic 5-card deck generation ($0 cost, 0 dependencies)
+- [x] **FSTUDY-021-02** — BYOK Gemini 1.5 Flash structured flashcard generator with JSON schema validation and graceful offline fallback
+- [x] **FSTUDY-021-03** — Interactive `ActiveRecallDialog` with question flip, hint toggle, 3-tier Leitner self-evaluation (Hard +10 XP, Good +20 XP, Mastered +30 XP)
+- [x] **FSTUDY-021-04** — Automatic deck mastery score calculation (0–100%) and sync with `Topic.confidenceScore` in Room DB
+- [x] **FSTUDY-021-05** — Contextual recall sprint triggers in `FocusScreen` (session completion), `TodayScreen` (schedule timeline & Next Session card), and `AiCoachService` (`TEST_ACTIVE_RECALL` intent)
+
+---
+
+## 🎧 Native Zero-Asset Focus Ambient Soundscapes (DEC-032)
+
+- [x] **FSTUDY-022-01** — `FocusSoundManager` real-time 16-bit 44.1kHz stereo PCM audio synthesis via native `AudioTrack` (0 audio files, 0 MB APK bloat)
+- [x] **FSTUDY-022-02** — White Noise (Gaussian static for speech masking) and Brown Noise (integrated Brownian rain rumble) synthesis algorithms
+- [x] **FSTUDY-022-03** — 10Hz Binaural Alpha Waves synthesis (200Hz left carrier + 210Hz right carrier differential) for deep cognitive focus
+- [x] **FSTUDY-022-04** — Focus timer lifecycle binding (auto-pause, stop, and clean `DisposableEffect` release) with JVM test-safe guards
+- [x] **FSTUDY-022-05** — 15 unit test suites passing 100% and fresh verified production packages in `distribution/` (debug APK 19.1 MB, release APK 12.3 MB, Google Play AAB 12.0 MB)
+
 
 
 

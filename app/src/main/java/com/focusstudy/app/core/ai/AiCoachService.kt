@@ -435,6 +435,28 @@ class AiCoachService(
                 )
             }
 
+            trimmed.contains("quiz", ignoreCase = true) || trimmed.contains("flashcard", ignoreCase = true) || trimmed.contains("active recall", ignoreCase = true) || trimmed.contains("test memory", ignoreCase = true) -> {
+                val topic = context.nextTopicName ?: context.atRiskTopics.firstOrNull() ?: "Core Syllabus Concepts"
+                CoachResponse(
+                    replyText = "Active recall is the most effective evidence-based learning technique! I've loaded a 5-card retrieval sprint for '$topic' with spaced repetition scoring. Tap the brain icon on any session card or start your recall sprint now.",
+                    supportingData = "Recommended Topic: $topic · 5 Recall Cards · Up to +150 Scholar XP",
+                    suggestedAction = CoachAction(
+                        actionType = "TEST_ACTIVE_RECALL",
+                        title = "Launch Recall Sprint for '$topic'",
+                        description = "Start interactive 5-question flashcard test on '$topic'.",
+                        payloadJson = """{"topicName":"$topic"}"""
+                    )
+                )
+            }
+
+            trimmed.contains("white noise", ignoreCase = true) || trimmed.contains("soundscape", ignoreCase = true) || trimmed.contains("focus sound", ignoreCase = true) || trimmed.contains("alpha wave", ignoreCase = true) -> {
+                CoachResponse(
+                    replyText = "Focus Study includes built-in real-time synthesized ambient soundscapes (White Noise, Brown Noise, and 10Hz Binaural Alpha Waves) directly inside the Focus Timer. It requires zero downloads or internet and generates ambient audio via native AudioTrack to keep your deep work distraction-free.",
+                    supportingData = "Available: White Noise · Deep Brown Noise · 10Hz Alpha Binaural Beats",
+                    suggestedAction = null
+                )
+            }
+
             else -> {
                 CoachResponse(
                     replyText = "Keep going strong! You've achieved a ${context.streakDays}-day streak with ${context.coveragePercent.toInt()}% coverage. Focusing on today's ${context.todayTargetMinutes}m target during ${context.peakWindow} will keep you ahead of your deadline.",

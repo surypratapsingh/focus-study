@@ -25,9 +25,17 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.focusstudy.app.core.database.entity.StudySession
+import com.focusstudy.app.core.database.entity.StudyAttempt
+import com.focusstudy.app.core.database.entity.Subtopic
+import com.focusstudy.app.core.audio.FocusSoundManager
+import com.focusstudy.app.core.audio.FocusSoundType
+import com.focusstudy.app.core.design.theme.StatusPill
 import com.focusstudy.app.core.design.theme.SuccessGreen
 import com.focusstudy.app.core.di.AppContainer
 import com.focusstudy.app.core.widget.TodayStudyWidgetProvider
+import com.focusstudy.app.feature.recall.ActiveRecallDialog
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -48,6 +56,23 @@ fun FocusScreen(
     val preferences by appContainer.userPreferencesManager.userPreferencesFlow.collectAsState(initial = null)
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var showActiveRecallDialog by remember { mutableStateOf(false) }
+    var selectedFocusSound by remember { mutableStateOf(FocusSoundType.OFF) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            FocusSoundManager.stop()
+        }
+    }
+
+    LaunchedEffect(state.isRunning, selectedFocusSound) {
+        if (state.isRunning && selectedFocusSound != FocusSoundType.OFF) {
+            FocusSoundManager.play(selectedFocusSound)
+        } else {
+            FocusSoundManager.stop()
+        }
+    }
 
     LaunchedEffect(state.isCompleted) {
         if (state.isCompleted) {
@@ -141,6 +166,60 @@ fun FocusScreen(
             }
         }
 
+        // Focus Ambient Soundscape (DEC-032)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("🎧", fontSize = 16.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Ambient Soundscape",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        if (selectedFocusSound != FocusSoundType.OFF && state.isRunning) {
+                            StatusPill(
+                                text = "SYNTHESIZING",
+                                containerColor = SuccessGreen.copy(alpha = 0.15f),
+                                contentColor = SuccessGreen
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        FocusSoundType.entries.forEach { soundType ->
+                            val isSelected = selectedFocusSound == soundType
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedFocusSound = soundType
+                                    if (state.isRunning) {
+                                        FocusSoundManager.play(soundType)
+                                    }
+                                },
+                                label = { Text("${soundType.emoji} ${soundType.title}", fontSize = 11.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // Completion Banner (+XP & minutes)
         if (state.isCompleted) {
             item {
@@ -171,6 +250,17 @@ fun FocusScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        if (state.activeTopic != null) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Button(
+                                onClick = { showActiveRecallDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("🧠 Test Active Recall Sprint (+XP)", fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }
@@ -298,5 +388,37 @@ fun FocusScreen(
                 }
             }
         }
+    }
+
+    if (showActiveRecallDialog && state.activeTopic != null) {
+        val apiKey = preferences?.customGeminiApiKey ?: ""
+        var subtopics by remember { mutableStateOf<List<Subtopic>>(emptyList()) }
+        LaunchedEffect(state.activeTopic?.id) {
+            subtopics = appContainer.database.syllabusDao().getSubtopicsForTopic(state.activeTopic!!.id).firstOrNull() ?: emptyList()
+        }
+        ActiveRecallDialog(
+            topic = state.activeTopic!!,
+            subject = state.activeSubject,
+            subtopics = subtopics,
+            apiKey = apiKey,
+            onDismiss = { showActiveRecallDialog = false },
+            onCompleted = { mastery, xp ->
+                coroutineScope.launch {
+                    val attempt = StudyAttempt(
+                        topicId = state.activeTopic!!.id,
+                        startedAtUtc = System.currentTimeMillis() - 180000L,
+                        endedAtUtc = System.currentTimeMillis(),
+                        durationSeconds = 180,
+                        notes = "Active Recall Sprint: $mastery% mastery (+${xp} XP)"
+                    )
+                    appContainer.database.studyAttemptDao().insertAttempt(attempt)
+                    val updatedTopic = state.activeTopic!!.copy(
+                        confidenceScore = mastery,
+                        status = if (mastery >= 75) "completed" else "in_progress"
+                    )
+                    appContainer.database.syllabusDao().updateTopic(updatedTopic)
+                }
+            }
+        )
     }
 }

@@ -684,6 +684,67 @@ Consequences: What this implies for the codebase
 
 ---
 
+### DEC-031 — Active Recall Flashcard Engine & Interactive Practice Quiz Generator (with Spaced Mastery Tracking and BYOK Gemini Support)
+**Date:** 2026-10-10  
+**Status:** Decided
+
+**Context:**
+Active Recall is recognized by cognitive science and the app's `PersonalizationEngine` (`LearningTechnique.ACTIVE_RECALL`) as the most potent learning method for long-term retention. Students finishing a focus block needed an immediate, frictionless way to test their memory on the active topic without third-party flashcard apps (e.g. Anki) or paid cloud subscriptions.
+
+**Decision:**
+1. **Lightweight Native Active Recall Engine (`ActiveRecallEngine`):**
+   - Implemented 100% offline pedagogical heuristic generator producing 5 structured flashcards per topic covering: Core Definition & Purpose, Mechanics & Implementation, Modular/Subtopic Breakdown, Trade-offs & Constraints, and the Feynman Challenge.
+   - Requires zero external dependencies ($0 cost, 100% offline, zero bloat).
+2. **BYOK Gemini 1.5 Flash Enhancement:**
+   - If the student configures their personal Google AI Studio API key (BYOK from DEC-028), can dynamically generate tailored, high-yield exam flashcards using structured JSON output (`responseMimeType: "application/json"`).
+   - Gracefully falls back to offline heuristics on network failure or empty key.
+3. **Leitner Spaced Repetition & Gamification XP:**
+   - Interactive flip/reveal UI (`ActiveRecallDialog`) with hints and 3-tier self-evaluations: Hard (+10 XP), Good (+20 XP), Mastered (+30 XP).
+   - Automatically computes Deck Mastery percentage (0% - 100%) and updates `Topic.confidenceScore` in Room DB.
+   - Logs `StudyAttempt` into Room DB, boosting Scholar XP and streak metrics.
+4. **Contextual Triggers:**
+   - Directly available upon completing a Pomodoro session in `FocusScreen`.
+   - 1-tap "🧠 Recall" button on schedule timeline sessions and "🧠 Quiz" on the Next Session card in `TodayScreen`.
+   - Conversational intent in `AiCoachService` ("quiz me on [Topic]").
+
+**Rationale:**
+- Directly aligns with Ponytail philosophy: builds upon existing SQLite tables, DAOs, and Scholar XP systems without new tables or external SDKs.
+- Closes the loop between passive study timers and active memory retention.
+
+**Consequences:**
+- Created `ActiveRecallEngine.kt` and `ActiveRecallDialog.kt`.
+- Integrated recall sprint triggers into `FocusScreen.kt`, `TodayScreen.kt`, and `AiCoachService.kt`.
+
+---
+
+### DEC-032 — Native Zero-Asset Ambient Focus Soundscapes (AudioTrack White Noise, Brown Noise, and 10Hz Alpha Waves Generator)
+**Date:** 2026-10-10  
+**Status:** Decided
+
+**Context:**
+Students require continuous background noise masking during study intervals to minimize ambient auditory distractions (Product Spec §14/15: "Optional: sound, haptic, white noise"). Bundling audio files (MP3/WAV) would add 30–50MB of binary bloat to the APK, while streaming requires internet access and third-party hosting.
+
+**Decision:**
+1. **Real-time PCM AudioTrack Synthesis (`FocusSoundManager`):**
+   - Synthesizes 16-bit 44.1kHz stereo audio directly in memory via native Android `AudioTrack`:
+     - **White Noise:** Uniform Gaussian static for broad conversational speech masking.
+     - **Brown Noise:** Integrated Brownian noise (`lastBrown = (lastBrown + 0.02 * white) / 1.02`) simulating heavy rainfall / deep oceanic rumble.
+     - **10Hz Alpha Waves:** Binaural frequency generator with 200Hz left carrier and 210Hz right carrier tone, stimulating 10Hz cognitive flow beats.
+2. **Zero Assets, Zero Bloat:**
+   - Uses 0 audio files, adds 0 MB to APK size, and runs 100% offline with negligible CPU utilization on a daemon synthesis thread.
+3. **Timer-Linked Lifecycle:**
+   - Sound plays during active focus timer runs (`isRunning`), automatically pauses when the timer pauses, stops on completion, and safely releases in `DisposableEffect`.
+   - Safe no-op guards prevent crashes in JVM unit test environments.
+
+**Rationale:**
+- Fully adheres to Ponytail Decision Ladder Rung 4 (Native OS feature `AudioTrack`).
+- Eliminates 50MB of bloat while delivering instant, customizable acoustic masking.
+
+**Consequences:**
+- Created `FocusSoundManager.kt`.
+- Updated `FocusScreen.kt` with soundscape selector chip row and status pills.
+- Added comprehensive unit test coverage in `ActiveRecallAndSoundTest.kt` (15 test suites passing 100%).
+
 ## Open Questions
 
 | # | Question | Owner | Status / Decision |

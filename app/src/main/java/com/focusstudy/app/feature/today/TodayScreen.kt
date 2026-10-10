@@ -17,12 +17,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.focusstudy.app.core.database.entity.StudySession
+import com.focusstudy.app.core.database.entity.StudyAttempt
+import com.focusstudy.app.core.database.entity.Subject
+import com.focusstudy.app.core.database.entity.Subtopic
+import com.focusstudy.app.core.database.entity.Topic
 import com.focusstudy.app.core.design.theme.StatusPill
 import com.focusstudy.app.core.design.theme.SuccessGreen
 import com.focusstudy.app.core.design.theme.WarningAmber
 import com.focusstudy.app.core.di.AppContainer
 import com.focusstudy.app.feature.common.AppTutorialDialog
+import com.focusstudy.app.feature.recall.ActiveRecallDialog
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 
 @Composable
 fun TodayScreen(
@@ -43,7 +51,11 @@ fun TodayScreen(
         )
     }
     val state by viewModel.uiState.collectAsState()
+    val preferences by appContainer.userPreferencesManager.userPreferencesFlow.collectAsState(initial = null)
+    val coroutineScope = rememberCoroutineScope()
     var showTutorialDialog by remember { mutableStateOf(false) }
+    var recallTopic by remember { mutableStateOf<Topic?>(null) }
+    var recallSubject by remember { mutableStateOf<Subject?>(null) }
 
     if (isWideScreen) {
         // Two-pane responsive layout for tablets, foldables, and landscape
@@ -71,7 +83,8 @@ fun TodayScreen(
                 item {
                     NextSessionCard(
                         state = state,
-                        onNavigateToFocus = onNavigateToFocus
+                        onNavigateToFocus = onNavigateToFocus,
+                        onTestRecall = { t, s -> recallTopic = t; recallSubject = s }
                     )
                 }
             }
@@ -94,7 +107,11 @@ fun TodayScreen(
                 if (state.atRiskTopics.isNotEmpty()) {
                     item { AtRiskTopicsCard(state = state) }
                 }
-                renderSessionsTimeline(state = state, onNavigateToFocus = onNavigateToFocus)
+                renderSessionsTimeline(
+                    state = state,
+                    onNavigateToFocus = onNavigateToFocus,
+                    onTestRecall = { t, s -> recallTopic = t; recallSubject = s }
+                )
             }
         }
     } else {
@@ -125,24 +142,65 @@ fun TodayScreen(
             item {
                 NextSessionCard(
                     state = state,
-                    onNavigateToFocus = onNavigateToFocus
+                    onNavigateToFocus = onNavigateToFocus,
+                    onTestRecall = { t, s -> recallTopic = t; recallSubject = s }
                 )
             }
             if (state.atRiskTopics.isNotEmpty()) {
                 item { AtRiskTopicsCard(state = state) }
             }
-            renderSessionsTimeline(state = state, onNavigateToFocus = onNavigateToFocus)
+            renderSessionsTimeline(
+                state = state,
+                onNavigateToFocus = onNavigateToFocus,
+                onTestRecall = { t, s -> recallTopic = t; recallSubject = s }
+            )
         }
     }
 
     if (showTutorialDialog) {
         AppTutorialDialog(onDismiss = { showTutorialDialog = false })
     }
+
+    if (recallTopic != null) {
+        val apiKey = preferences?.customGeminiApiKey ?: ""
+        var subtopics by remember { mutableStateOf<List<Subtopic>>(emptyList()) }
+        LaunchedEffect(recallTopic?.id) {
+            subtopics = appContainer.database.syllabusDao().getSubtopicsForTopic(recallTopic!!.id).firstOrNull() ?: emptyList()
+        }
+        ActiveRecallDialog(
+            topic = recallTopic!!,
+            subject = recallSubject,
+            subtopics = subtopics,
+            apiKey = apiKey,
+            onDismiss = {
+                recallTopic = null
+                recallSubject = null
+            },
+            onCompleted = { mastery, xp ->
+                coroutineScope.launch {
+                    val attempt = StudyAttempt(
+                        topicId = recallTopic!!.id,
+                        startedAtUtc = System.currentTimeMillis() - 180000L,
+                        endedAtUtc = System.currentTimeMillis(),
+                        durationSeconds = 180,
+                        notes = "Active Recall Sprint: $mastery% mastery (+${xp} XP)"
+                    )
+                    appContainer.database.studyAttemptDao().insertAttempt(attempt)
+                    val updatedTopic = recallTopic!!.copy(
+                        confidenceScore = mastery,
+                        status = if (mastery >= 75) "completed" else "in_progress"
+                    )
+                    appContainer.database.syllabusDao().updateTopic(updatedTopic)
+                }
+            }
+        )
+    }
 }
 
 private fun LazyListScope.renderSessionsTimeline(
     state: TodayUiState,
-    onNavigateToFocus: (StudySession?) -> Unit
+    onNavigateToFocus: (StudySession?) -> Unit,
+    onTestRecall: (Topic, Subject?) -> Unit = { _, _ -> }
 ) {
     item {
         Text(
@@ -202,6 +260,11 @@ private fun LazyListScope.renderSessionsTimeline(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                    if (topic != null) {
+                        IconButton(onClick = { onTestRecall(topic, subject) }) {
+                            Text("🧠", fontSize = 16.sp)
+                        }
                     }
                     if (!session.isCompleted) {
                         IconButton(onClick = { onNavigateToFocus(session) }) {
@@ -396,7 +459,8 @@ private fun DailyProgressCard(state: TodayUiState) {
 @Composable
 private fun NextSessionCard(
     state: TodayUiState,
-    onNavigateToFocus: (StudySession?) -> Unit
+    onNavigateToFocus: (StudySession?) -> Unit,
+    onTestRecall: (Topic, Subject?) -> Unit = { _, _ -> }
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -438,14 +502,28 @@ private fun NextSessionCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                Button(
-                    onClick = { onNavigateToFocus(state.nextSession) },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Start Session Now", fontWeight = FontWeight.SemiBold)
+                    Button(
+                        onClick = { onNavigateToFocus(state.nextSession) },
+                        modifier = Modifier.weight(1.3f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Start Session", fontWeight = FontWeight.SemiBold)
+                    }
+                    if (state.nextTopic != null) {
+                        OutlinedButton(
+                            onClick = { onTestRecall(state.nextTopic, state.nextSubject) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("🧠 Quiz", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
                 }
             }
         }
