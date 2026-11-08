@@ -182,6 +182,18 @@ object PlannerEngine {
     }
 
     /**
+     * Start time for the n-th session of a day: the preset slots first, then 15-minute-spaced
+     * slots after the last preset so a long day never reuses (and overlaps) an earlier slot.
+     * ponytail: wraps past midnight for budgets beyond ~8h; move to a real scheduler if that matters.
+     */
+    internal fun sessionStartTime(index: Int, presets: List<String>, durationMinutes: Int): String {
+        if (index < presets.size) return presets[index]
+        val (h, m) = presets.last().split(":").map { it.toInt() }
+        val minutes = (h * 60 + m + (index - presets.size + 1) * (durationMinutes + 15)) % (24 * 60)
+        return "%02d:%02d".format(minutes / 60, minutes % 60)
+    }
+
+    /**
      * Builds a comprehensive study plan allocating sessions across all days.
      */
     fun generateDeterministicPlan(
@@ -251,7 +263,7 @@ object PlannerEngine {
 
             while (allocatedDayMinutes + sessionDurationMinutes <= dailyBudget && rankedTopics.isNotEmpty()) {
                 val currentTopic = rankedTopics[topicIndex % rankedTopics.size]
-                val startTime = defaultSessionTimes.getOrElse(sessionSlotIndex % defaultSessionTimes.size) { "08:00" }
+                val startTime = sessionStartTime(sessionSlotIndex, defaultSessionTimes, sessionDurationMinutes)
 
                 allSessions.add(
                     StudySession(
