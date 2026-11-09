@@ -77,7 +77,7 @@ object CalendarExportManager {
             sb.append("DTSTART:$startUtcStr\r\n")
             sb.append("DTEND:$endUtcStr\r\n")
             sb.append("SUMMARY:Study: ${escapeIcs(topicName)}\r\n")
-            val desc = "Subject: $subjectName\\nDuration: ${session.durationMinutes} mins\\nPhase: ${session.mode}\\nStatus: ${if (session.isCompleted) "Completed" else "Planned"}"
+            val desc = "Subject: $subjectName\nDuration: ${session.durationMinutes} mins\nPhase: ${session.mode}\nStatus: ${if (session.isCompleted) "Completed" else "Planned"}"
             sb.append("DESCRIPTION:${escapeIcs(desc)}\r\n")
             sb.append("STATUS:CONFIRMED\r\n")
             sb.append("TRANSP:OPAQUE\r\n")

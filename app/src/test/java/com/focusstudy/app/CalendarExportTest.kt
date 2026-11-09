@@ -121,4 +121,24 @@ class CalendarExportTest {
         assertTrue(ics.contains("SUMMARY:🎯 EXAM: Bar Exam"))
         assertFalse(ics.contains("UID:session-"))
     }
+
+    @Test
+    fun testSessionDescription_usesIcsNewlineEscapes() {
+        val session = StudySession(
+            id = "sess-n",
+            planDayId = "day-1",
+            subjectId = "subj-1",
+            topicId = "topic-1",
+            scheduledDate = "2026-10-15",
+            startTime = "10:00",
+            durationMinutes = 30,
+            mode = "deep_work",
+            isCompleted = false
+        )
+        val ics = CalendarExportManager.generateIcsCalendar(exam = null, sessions = listOf(session))
+
+        // A single backslash-n is an ICS line break; a doubled backslash would render a literal "\n".
+        assertTrue(ics.contains("Duration: 30 mins\\nPhase:"))
+        assertFalse(ics.contains("\\\\n"))
+    }
 }
