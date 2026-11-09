@@ -81,4 +81,18 @@ class PlannerEngineTest {
         assertFalse(result.isOverloaded) // 195 min needed vs thousands available
         assertTrue(result.requiredPaceMinutesPerDay > 0)
     }
+
+    @Test
+    fun generateDeterministicPlan_neverReusesStartTimeWithinADay() {
+        val now = System.currentTimeMillis()
+        val exam = Exam(id = "e", title = "Exam", examType = "university", examDateUtc = now + 30L * 24 * 60 * 60 * 1000L)
+        val topics = listOf(Topic(id = "t1", unitId = "u1", subjectId = "s1", name = "T", estimatedEffortMinutes = 90))
+
+        // Default weekend budget (300 min / 45 min) yields 6 sessions, more than the 5 preset slots.
+        val result = PlannerEngine.generateDeterministicPlan(exam, topics, 180, 300, 45, Date(now))
+
+        val dupes = result.sessions.groupBy { it.scheduledDate }
+            .filterValues { day -> day.map { it.startTime }.let { it.size != it.toSet().size } }
+        assertTrue("days with duplicate start times: ${dupes.keys}", dupes.isEmpty())
+    }
 }
